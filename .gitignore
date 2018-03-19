@@ -1,5 +1,6 @@
 node_modules
 old_parsed
+parsed
 *.anim
-*.json
 .idea
+package-lock.json

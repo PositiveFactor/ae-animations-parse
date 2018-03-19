@@ -4,6 +4,7 @@ require('./polyfills');
 
 const aeToJSON = require('ae-to-json/after-effects');
 const fs = require('fs');
+const path = require('path');
 const ae = require('after-effects');
 ae.options.includes = [
   './node_modules/after-effects/lib/includes/console.jsx',
@@ -23,9 +24,13 @@ const Promise = require('promise');
 const aeGetLayersTransform = require('./ae/aeGetLayersTransform');
 const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
 const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
+const aeGetLayerDef = require('./ae/aeGetLayerDef');
 //  ...
 
-function writeFile(filepath, data){
+const baseFolder = 'parsed';
+
+function writeFile(filename, data){
+  var filepath = path.join(baseFolder, filename);
 	fs.writeFile(filepath, data, function(err) {
 		if(err) {
 			return console.log(`error while write "${filepath}":\n${err}`);
@@ -36,53 +41,53 @@ function writeFile(filepath, data){
 	});
 }
 
+
+function getLen(){
+  var func = require('./ae/aeGetSceneLength');
+  // func = func.bind(this, 'abc', 123);
+  var ret = ae(func);
+  console.log(ret);
+  return ret;
+}
+
 function parse(filename){
 	var json = ae(aeGetLayersTransform);
-	
+
 	var filename = filename || 'default';
 	var filenameJSON = filename + '.json';
-	var isjson = false;
-	
-	//console.log(json);
+
 	writeFile(filenameJSON, JSON.stringify(json, null, '  '));
 
-	if(isjson){
-		var data = JSON.stringify(json, true, ' ');
-		filename = filename + '.json';
-	}
-	else{
-		filename = filename + '.anim';
-		var str = '';
-		var layers = json.layers;
-		for (var i=0;i<json.layers.length;i++){
-			var name = json.layers[i].name;
-			var keys = json.layers[i].keys;
-			var oldKeys = json.layers[i].keys;
-			var absKey = 0;
-			
-			str = str + (i+1) + ' ' + name + '\n';
-			str = str  + "createjs.Tween.get( this._fContainer_cjc, {useTicks:true})\n";
-			
-			for(var j=0;j<keys.length;j++) {
-				var isLastKey = j===keys.length-1;
-				str = str + '\t .to(' + JSON.stringify(keys[j][0]) + ', ' + keys[j][1]*2 + ')' + '\t// ' + absKey*2 + (isLastKey ? '' : '\n');
-				absKey += keys[j][1];
-			}
-			str = str + '\n\n';		
-		}
-		str = str + '\n';
-		data = str;
-	}
+	filename = filename + '.anim';
+	var str = '';
+	var layers = json.layers;
+	for (var i=0;i<json.layers.length;i++){
+		var name = json.layers[i].name;
+		var keys = json.layers[i].keys;
+		var oldKeys = json.layers[i].oldKeys;
+		var absKey = 0;
 
-	writeFile(filename, data);
+		str = str + (i+1) + ' ' + name + '\n';
+		str = str  + "createjs.Tween.get( this._fContainer_cjc, {useTicks:true})\n";
+
+		for(var j=0;j<keys.length;j++) {
+			var isLastKey = j===keys.length-1;
+			str = str + '\t .to(' + JSON.stringify(keys[j][0]) + ', ' + keys[j][1]*2 + ')' + '\t// ' + absKey*2 + (isLastKey ? '' : '\n');
+			absKey += keys[j][1];
+		}
+		str = str + '\n\n';
+	}
+	str = str + '\n';
+
+	writeFile(filename, str);
 }
 
 function getKeysForLayer(){
-	var active = app.project.activeItem; 
+	var active = app.project.activeItem;
 	var layers = active.layers;
 	var numLayers = active.numLayers;
 	var ret = [];
-	var layer = layers[20]; 
+	var layer = layers[20];
 	console.log(layer.name);
 	var transform = layer['Transform'];
 	var propId = 10; // 11-alpha;
@@ -91,18 +96,18 @@ function getKeysForLayer(){
 	var fps = 30;
 	var step = 1/fps;
 	var steps = dur / step;
-	
+
 	prevVal = prop.valueAtTime(0, true);
 	for(var i=0;i<steps;i++){
 		var val = prop.valueAtTime(i*step, true);
 		console.log(i*step, ' ', val);
 		ret.push(val);
 	}
-	
-	
+
+
 	/*
 	for(var i=1; i<=numLayers;i++){
-		var layer = layers[i]; 
+		var layer = layers[i];
 		ret.push(layer.name);
 		console.log(i, ' ', layer.name);
 		//var transform = layer['Transform'];
@@ -145,7 +150,7 @@ function ask(questions, cb){
 }
 
 function layerParse(){
-	var vals = [0, 0,7, 0, 0, 
+	var vals = [0, 0,7, 0, 0,
 	12,2,3, 0,
 		0,30,0, 0,
 		10,0,0,29,
@@ -154,7 +159,7 @@ function layerParse(){
 
 	var keys = [5,13,16, 19, 43,
 	49,55,58,64,
-				89, 98, 110, 122, 
+				89, 98, 110, 122,
 				129, 134, 147, 154,
 				167, 174, 180
 	]
@@ -165,7 +170,7 @@ function layerParse(){
 		prevKey = keys[g]*1;
 		console.log('[{"alpha":' + (val*0.01) + '},' + dur*2 + '],');
 	}
-	
+
 }
 
 function parseFallingCoins(){
@@ -175,7 +180,7 @@ function parseFallingCoins(){
 		str += JSON.stringify(json[i]);
 		str += ',\n';
 	}
-	
+
 	var filename = 'falling_coins.anim';
     var data = str;
 	writeFile(filename, data);
@@ -183,43 +188,43 @@ function parseFallingCoins(){
 
 function parseCoins(){
 	var json = ae(aeGetCoinsDef);
-	
+
 	str = '';
 	for (var i=0;i<json.length;i++){
 		str += JSON.stringify(json[i]);
 		str += ',\n';
 	}
-	
+
 	//str += JSON.stringify(json);
-	
+
 	//str = str + '\n';
 	var filename = 'coins.anim';
     var data = str;
 
 	writeFile(filename, data);
-	
+
 	return;
-  
+
     var filename = 'coins.anim';
     var str = '';
     var layers = json;
 	//str += '[	//   0    |  1   |   2   |   3   |  4  |  5  |  6  |  7  |   8    |   9    |    10     |     11     |      12      |      13'
-	//str += '    // DELAY  | TIME | initX | initY | B1X | B1Y | B2X | B2Y | finalX | finalY | initScale | finalScale | initRotation | targetRotation' 
-	
+	//str += '    // DELAY  | TIME | initX | initY | B1X | B1Y | B2X | B2Y | finalX | finalY | initScale | finalScale | initRotation | targetRotation'
+
 	//str += '    [    0    ,  30  ,  881  ,  556  , 1094, 158 , 1604, 354 ,  1766  ,  1131  ,   0.6     ,   0.6      ,      29      ,      53 		], // 0'
-	
+
 	var TITLES = ["DELAY", "TIME", "initX", "initY", "B1X", "B1Y", "B2X", "B2Y", "finalX", "finalY", "initScale", "finalScale", "initRotation", "targetRotation"];
 	var INDEXES = [];
 	var W = 20;
-	
-	
+
+
 	for (var t=0;t<TITLES.length;t++){
 		var numFill = W - TITLES[t].length;
 		var startFill = Math.floor(numFill/2);
 		var endFill = numFill - startFill;
 		TITLES[t] = TITLES[t].padStart(startFill);
 		TITLES[t] = TITLES[t].padEnd(endFill);
-		
+
 		var index = (t).toString();
 		numFill = W - index.length;
 		startFill = Math.floor(numFill/2);
@@ -228,15 +233,15 @@ function parseCoins(){
 		index = index.padEnd(endFill);
 		INDEXES[t] = index;
 	}
-	
+
 	str += INDEXES.join('|');
 	str += '\n';
 	str += TITLES.join('|');
 	str += '\n';
-	
+
 	console.log(str);
 	return;
-	
+
 	var s = '';
 	for (var r=0;r<json.length;r++){
 		for (var t=0;t<TITLES.length;t++){
@@ -249,7 +254,7 @@ function parseCoins(){
 			INDEXES[t] = index;
 		}
 	}
-	
+
 	/*
     for (var i=0;i<json.length;i++){
         var name = json[i].name;
@@ -257,8 +262,8 @@ function parseCoins(){
         var oldKeys = json.layers[i].keys;
         str = str + (i+1) + ' ' + name + '\n';
         //str = str  + "createjs.Tween.get( this._fContainer_cjc, {useTicks:true})\n";
-		
-		
+
+
 
         var absKey = 0;
         for(var j=0;j<keys.length;j++) {
@@ -266,13 +271,13 @@ function parseCoins(){
             str = str + '\t .to(' + JSON.stringify(keys[j][0]) + ', ' + keys[j][1]*2 + ')' + '\t// ' + absKey*2 + (isLastKey ? '' : '\n');
             absKey += keys[j][1];
         }
-        str = str + '\n\n';		
+        str = str + '\n\n';
     }
 	*/
-	
+
     str = str + '\n';
     var data = str;
-	
+
 	writeFile(filename, data);
 }
 
@@ -281,11 +286,16 @@ program
   .version('0.0.1')
 
 program
-  .command('parse <filename>')
+  .command('parse [filename]')
   .alias('p')
   .description('parse opened ae file to ".anim" file.')
   .action(parse)
-  
+
+program
+  .command('len')
+  .description('get scene len in seconds.')
+  .action(getLen)
+
 program
 .command('coin')
 .alias('c')
@@ -302,17 +312,9 @@ program
 aeGetFallingCoinsDef
 
 program
-   .command('layer')
-   .alias('l')
-   .description('get keys for concrete layer with procedure animation(wiggle etc.).')
-   .action(layerParse)
+.command('layer')
+.alias('l')
+.description('get keys for concrete layer with procedure animation(wiggle etc.).')
+.action(layerParse)
 
 program.parse(process.argv);
-
-
-
-
-
-
-
-
