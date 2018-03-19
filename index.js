@@ -1,75 +1,50 @@
 'use strict';
 
-var aeToJSON = require('ae-to-json/after-effects');
-var ae = require('after-effects');
-var fs = require('fs');
-var program = require('commander');
+require('./polyfills');
+
+const aeToJSON = require('ae-to-json/after-effects');
+const fs = require('fs');
+const ae = require('after-effects');
+ae.options.includes = [
+  './node_modules/after-effects/lib/includes/console.jsx',
+  './node_modules/after-effects/lib/includes/es5-shim.jsx',
+  './node_modules/after-effects/lib/includes/get.jsx'
+];
+
+// cli interface dependencies ...
+const program = require('commander');
 const inquirer = require('inquirer'); // require inquirerjs library
 inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 const fuzzy = require('fuzzy');
 const Promise = require('promise');
+// ...
 
+// user scripts ...
 const aeGetLayersTransform = require('./ae/aeGetLayersTransform');
 const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
 const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
+//  ...
 
-//json = ae(aeToJSON);
-
- ae.options.includes = [
- 	'./node_modules/after-effects/lib/includes/console.jsx',
- 	'./node_modules/after-effects/lib/includes/es5-shim.jsx',
- 	'./node_modules/after-effects/lib/includes/get.jsx'
- ];
-
-// https://github.com/uxitten/polyfill/blob/master/string.polyfill.js
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart
-if (!String.prototype.padStart) {
-    String.prototype.padStart = function padStart(targetLength,padString) {
-        targetLength = targetLength>>0; //truncate if number or convert non-number to 0;
-        padString = String((typeof padString !== 'undefined' ? padString : ' '));
-        if (this.length > targetLength) {
-            return String(this);
-        }
-        else {
-            targetLength = targetLength-this.length;
-            if (targetLength > padString.length) {
-                padString += padString.repeat(targetLength/padString.length); //append to original to ensure we are longer than needed
-            }
-            return padString.slice(0,targetLength) + String(this);
-        }
-    };
-}
-
-// https://github.com/uxitten/polyfill/blob/master/string.polyfill.js
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padEnd
-if (!String.prototype.padEnd) {
-    String.prototype.padEnd = function padEnd(targetLength,padString) {
-        targetLength = targetLength>>0; //floor if number or convert non-number to 0;
-        padString = String((typeof padString !== 'undefined' ? padString : ' '));
-        if (this.length > targetLength) {
-            return String(this);
-        }
-        else {
-            targetLength = targetLength-this.length;
-            if (targetLength > padString.length) {
-                padString += padString.repeat(targetLength/padString.length); //append to original to ensure we are longer than needed
-            }
-            return String(this) + padString.slice(0,targetLength);
-        }
-    };
-}
-
-
-function getStringDef(){
-	
+function writeFile(filepath, data){
+	fs.writeFile(filepath, data, function(err) {
+		if(err) {
+			return console.log(`error while write "${filepath}":\n${err}`);
+		}
+		else{
+			console.log(`writed "${filepath}"`);
+		}
+	});
 }
 
 function parse(filename){
 	var json = ae(aeGetLayersTransform);
-	//console.log(json);
-
+	
 	var filename = filename || 'default';
+	var filenameJSON = filename + '.json';
 	var isjson = false;
+	
+	//console.log(json);
+	writeFile(filenameJSON, JSON.stringify(json, null, '  '));
 
 	if(isjson){
 		var data = JSON.stringify(json, true, ' ');
@@ -99,17 +74,8 @@ function parse(filename){
 		data = str;
 	}
 
-	fs.writeFile(filename, data, function(err) {
-		if(err) {
-			return console.log(err);
-		}
-		else{
-			console.log('writed file');
-		}
-	});
+	writeFile(filename, data);
 }
-
-
 
 function getKeysForLayer(){
 	var active = app.project.activeItem; 
@@ -179,14 +145,6 @@ function ask(questions, cb){
 }
 
 function layerParse(){
-	//layersList = ae(getLayers);
-	//var ret = ae(getKeysForLayer);
-	
-	//console.log(ret);
-	/*ask(GAME_ASK, (ans)=>{
-		console.log(ans);
-	})*/
-	
 	var vals = [0, 0,7, 0, 0, 
 	12,2,3, 0,
 		0,30,0, 0,
@@ -220,15 +178,7 @@ function parseFallingCoins(){
 	
 	var filename = 'falling_coins.anim';
     var data = str;
-
-	fs.writeFile(filename, data, function(err) {
-		if(err) {
-			return console.log(err);
-		}
-		else{
-			console.log('writed file');
-		}
-	});
+	writeFile(filename, data);
 }
 
 function parseCoins(){
@@ -246,15 +196,7 @@ function parseCoins(){
 	var filename = 'coins.anim';
     var data = str;
 
-	fs.writeFile(filename, data, function(err) {
-		if(err) {
-			return console.log(err);
-		}
-		else{
-			console.log('writed file');
-		}
-	});
-	
+	writeFile(filename, data);
 	
 	return;
   
@@ -330,15 +272,8 @@ function parseCoins(){
 	
     str = str + '\n';
     var data = str;
-
-	fs.writeFile(filename, data, function(err) {
-		if(err) {
-			return console.log(err);
-		}
-		else{
-			console.log('writed file');
-		}
-	});
+	
+	writeFile(filename, data);
 }
 
 
@@ -348,7 +283,7 @@ program
 program
   .command('parse <filename>')
   .alias('p')
-  .description('parse opened ae file.')
+  .description('parse opened ae file to ".anim" file.')
   .action(parse)
   
 program
