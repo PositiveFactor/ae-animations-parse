@@ -84,6 +84,7 @@ function aeGetLayersTransform() {
 		console.log(layer);
 		var jsonLayer = {
 			name:layer.name,
+			index: layer.index,
 			keys:{},
 		};
 		var transform = layer['Transform'];
@@ -103,44 +104,50 @@ function aeGetLayersTransform() {
 					var prevVal = prop.valueAtTime(prevKey, true);
 				}
 
-				//console.log(prevVal, ' ', val, ' ', JSON.stringify(prevVal) == JSON.stringify(val));
-				//if(prevKey == null || JSON.stringify(prevVal) !== JSON.stringify(val)){
-					addKey(jsonLayer.keys, key, propId, val);
-				//}
-
+				addKey(jsonLayer.keys, key, propId, val);
 			};
 			prevKey = key;
 		}
+
 		return jsonLayer;
-	}
 
-	for(var i=1; i<=numLayers;i++){
+		var keysArr = [];
+		var oldKeys = [];
 
-		var layer = layers[i];
-		console.log(i, ' ', layer, ' ', layer.name);
-		var jsonLayer = getLayerDef(layer);
 
-		var ret = [];
-		var keys = Object.keys(jsonLayer.keys);
-		var oldKeys = Object.keys(jsonLayer.keys);
-
-		for (var k=0; k<keys.length;k++){
-			keys[k] = parseInt(keys[k]);
-		}
+		var strKeys = Object.keys(jsonLayer.keys);
+		console.log(strKeys);
+		var keys = strKeys.map(parseInt);
+		console.log('keys', keys);
+		keys = keys.sort();
+		console.log('after sort', keys);
 
 		var prevKey = 0;
 		for (var g=0; g<keys.length;g++){
-			ret.push([
+			keysArr.push([
 				jsonLayer.keys[keys[g]],
 				keys[g]*1-prevKey,
 			]);
 			prevKey = keys[g]*1;
 		}
 
-		jsonLayer.keys = ret;
+		jsonLayer.keys = keysArr;
 		jsonLayer.oldKeys = oldKeys;
+
+		return jsonLayer;
+	}
+
+/*
+	for(var i=1; i<=numLayers;i++){
+		var layer = layers[i];
+		console.log(i, ' ', layer, ' ', layer.name);
+		var jsonLayer = getLayerDef(layer);
 		json.layers.push(jsonLayer);
 	}
+*/
+	var layer = layers[5];
+	var jsonLayer = getLayerDef(layer);
+	json.layers.push(jsonLayer);
 
 	return json;
 }

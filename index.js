@@ -27,6 +27,8 @@ const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
 const aeGetLayerDef = require('./ae/aeGetLayerDef');
 //  ...
 
+const output = require('./outputMethods');
+
 const baseFolder = 'parsed';
 
 function writeFile(filename, data){
@@ -41,79 +43,27 @@ function writeFile(filename, data){
 	});
 }
 
-
 function getLen(){
   var func = require('./ae/aeGetSceneLength');
   // func = func.bind(this, 'abc', 123);
-  var ret = ae(func);
-  console.log(ret);
-  return ret;
+  var len = ae(func);
+  return len;
+}
+
+function layerInfo(layerId){
+  var func = require('./ae/aeGetLayerInfo');
+  var json = ae(func);
 }
 
 function parse(filename){
-	var json = ae(aeGetLayersTransform);
+	var aeJSON = ae(aeGetLayersTransform);
 
 	var filename = filename || 'default';
 	var filenameJSON = filename + '.json';
+	writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
 
-	writeFile(filenameJSON, JSON.stringify(json, null, '  '));
-
-	filename = filename + '.anim';
-	var str = '';
-	var layers = json.layers;
-	for (var i=0;i<json.layers.length;i++){
-		var name = json.layers[i].name;
-		var keys = json.layers[i].keys;
-		var oldKeys = json.layers[i].oldKeys;
-		var absKey = 0;
-
-		str = str + (i+1) + ' ' + name + '\n';
-		str = str  + "createjs.Tween.get( this._fContainer_cjc, {useTicks:true})\n";
-
-		for(var j=0;j<keys.length;j++) {
-			var isLastKey = j===keys.length-1;
-			str = str + '\t .to(' + JSON.stringify(keys[j][0]) + ', ' + keys[j][1]*2 + ')' + '\t// ' + absKey*2 + (isLastKey ? '' : '\n');
-			absKey += keys[j][1];
-		}
-		str = str + '\n\n';
-	}
-	str = str + '\n';
-
-	writeFile(filename, str);
-}
-
-function getKeysForLayer(){
-	var active = app.project.activeItem;
-	var layers = active.layers;
-	var numLayers = active.numLayers;
-	var ret = [];
-	var layer = layers[20];
-	console.log(layer.name);
-	var transform = layer['Transform'];
-	var propId = 10; // 11-alpha;
-	var prop = transform.property(propId);
-	var dur = 6;
-	var fps = 30;
-	var step = 1/fps;
-	var steps = dur / step;
-
-	prevVal = prop.valueAtTime(0, true);
-	for(var i=0;i<steps;i++){
-		var val = prop.valueAtTime(i*step, true);
-		console.log(i*step, ' ', val);
-		ret.push(val);
-	}
-
-
-	/*
-	for(var i=1; i<=numLayers;i++){
-		var layer = layers[i];
-		ret.push(layer.name);
-		console.log(i, ' ', layer.name);
-		//var transform = layer['Transform'];
-	}
-	*/
-	return ret;
+  filename = filename + '.anim';
+	writeFile(filename, output.cjs(aeJSON));
 }
 
 var layersList = [];
@@ -312,9 +262,14 @@ program
 aeGetFallingCoinsDef
 
 program
-.command('layer')
-.alias('l')
+.command('layerparse')
 .description('get keys for concrete layer with procedure animation(wiggle etc.).')
 .action(layerParse)
+
+program
+.command('layer')
+.alias('l')
+.description('pass')
+.action(layerInfo)
 
 program.parse(process.argv);
