@@ -137,17 +137,12 @@ function aeGetLayersTransform() {
 		return jsonLayer;
 	}
 
-/*
 	for(var i=1; i<=numLayers;i++){
 		var layer = layers[i];
 		console.log(i, ' ', layer, ' ', layer.name);
 		var jsonLayer = getLayerDef(layer);
 		json.layers.push(jsonLayer);
 	}
-*/
-	var layer = layers[5];
-	var jsonLayer = getLayerDef(layer);
-	json.layers.push(jsonLayer);
 
 	return json;
 }

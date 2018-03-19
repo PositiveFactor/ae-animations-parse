@@ -39,8 +39,8 @@ function cjs(aeJSON){
       var paramsString = JSON.stringify(keys[j].tf);
       var keyframe = keys[j].key;
       var duration = (keyframe-prevKey);
-      var viewKeyframe = `${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)} [${duration}*2]`;
-      str += `\t.to(${paramsString}, ${duration*2}) //\t${viewKeyframe}${ending}`;
+      var viewKeyframe = `${keyframe}\t${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)}`;
+      str += `\t.to(${paramsString}, ${duration*2}) // ${viewKeyframe}${ending}`;
 			absKey += duration;
       prevKey = keyframe;
 		}
