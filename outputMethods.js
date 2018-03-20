@@ -82,7 +82,7 @@ function cjs(aeJSON){
       var duration = (keyframe-prevKey);
 
       var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
-      var viewBase = `\t.to(${paramsString}, ${duration*2})`;
+      var viewBase = paramsString === '{}' ? `\t.wait(${duration*2})` : `\t.to(${paramsString}, ${duration*2})`; 
 
       stringParts.push([viewBase, viewKeyframe]);
       maxBaseLength = Math.max(viewBase.length, maxBaseLength);
