@@ -87,8 +87,11 @@ function aeGetLayersTransform() {
 			index: layer.index,
 			keys:{},
 		};
+		var effects = layer['Effects'];
 		var transform = layer['Transform'];
 		var allKeys = getAllKeysForTransform(transform);
+
+		jsonLayer.effectsExist = !!effects;
 
 		var prevKey = null;
 		for (var r=0;r<allKeys.length;r++){
