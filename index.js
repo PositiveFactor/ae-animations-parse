@@ -101,7 +101,7 @@ function parseCoins(filename){
   var fname = `coins_def/${filename}.anim`;
 
   writeFile(fnameJSON, JSON.stringify(aeJSON, null, '  '));
-	writeFile(fname, outputMethods.coinsTrail(aeJSON));
+	writeFile(fname, output.coinsTrail(aeJSON));
 }
 
 

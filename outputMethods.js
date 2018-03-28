@@ -102,26 +102,41 @@ function cjs(aeJSON){
 }
 
 function coinsTrail(aeJSON){
-  str = '';
+  var str = '';
 	for (var i=0;i<aeJSON.length;i++){
     var out = aeJSON[i];
     if(out.def){
       str += `${out.layername} ${out.def},\n`;
     }
     else{
+
+
+
       var sp = out.layername.split(' ');
       var color = sp[0];
+
+      if(color === 'green'){
+        color = 'brown';
+      }
+
+      if(color === 'red'){
+        color = 'green';
+      }
+
+      if(out.effects === true && color === 'blue'){
+        color = 'red';
+      }
+
       str += `[ ${out.delay}, ${out.time}, ${out.initX}, ${out.initY}, `;
   		str += `${out.B1X}, ${out.B1Y}, ${out.B2X}, ${out.B2Y}, `;
   		str += `${out.finalX}, ${out.finalY}, ${out.initScale}, ${out.finalScale}, `;
-  		str += `${out.initRotation}, ${out.targetRotation}, ${out.finalScale}, ${out.finalScale}, "${color}" ], // ${out.layername}`;
-  		str += ',\n';
+  		str += `${out.initRotation}, ${out.targetRotation}, ${out.finalScale}, ${out.finalScale}, "${color}" ], // ${out.layerindex} ${color}\n`;
     }
 	}
   return str;
 }
 
-function coinsTrails2(){
+function coinsTrail2(){
   //str += '[	//   0    |  1   |   2   |   3   |  4  |  5  |  6  |  7  |   8    |   9    |    10     |     11     |      12      |      13'
 	//str += '    // DELAY  | TIME | initX | initY | B1X | B1Y | B2X | B2Y | finalX | finalY | initScale | finalScale | initRotation | targetRotation'
 
@@ -168,26 +183,6 @@ function coinsTrails2(){
 			INDEXES[t] = index;
 		}
 	}
-
-	/*
-    for (var i=0;i<json.length;i++){
-        var name = json[i].name;
-        var keys = json[i].keys;
-        var oldKeys = json.layers[i].keys;
-        str = str + (i+1) + ' ' + name + '\n';
-        //str = str  + "createjs.Tween.get( this._fContainer_cjc, {useTicks:true})\n";
-
-
-
-        var absKey = 0;
-        for(var j=0;j<keys.length;j++) {
-            var isLastKey = j===keys.length-1;
-            str = str + '\t .to(' + JSON.stringify(keys[j][0]) + ', ' + keys[j][1]*2 + ')' + '\t// ' + absKey*2 + (isLastKey ? '' : '\n');
-            absKey += keys[j][1];
-        }
-        str = str + '\n\n';
-    }
-	*/
 
     str = str + '\n';
     return str;

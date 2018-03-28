@@ -60,7 +60,6 @@ function aeGetCoinsDef() {
 				console.log(group.property(i));
 			}
 		}
-
 	}
 
 	function getAllKeys(){
@@ -91,18 +90,18 @@ function aeGetCoinsDef() {
 	var numLayers = active.numLayers;
 	var res = [];
 	for(var i=1; i<=numLayers;i++){
-		var layer = layers[i]; console.log(i, ' ', layer, ' ', layer.name);
+		var layer = layers[i]; console.log(layer.index, ' ', layer, ' ', layer.name);
 		jsonLayer = {
 			name:layer.name,
 			keys:{},
 		};
 
 
-
 		var effects = layer['Effects'];
 		var colorAdd = false;
 
 		if(effects){
+			showPropertiesOfGroup(effects);
 			var vc = effects.property('VC Color Vibrance');
 			if(vc){
 				console.log(effects);
@@ -149,8 +148,8 @@ function aeGetCoinsDef() {
 		var inInterpolationType = posProp.keyInInterpolationType(1);
 		var outInterpolationType = posProp.keyOutInterpolationType(1);
 
-		console.log('in ', interpolations[posProp.keyInInterpolationType(1)]);
-		console.log('out ', interpolations[posProp.keyOutInterpolationType(1)]);
+		// console.log('in ', interpolations[posProp.keyInInterpolationType(1)]);
+		// console.log('out ', interpolations[posProp.keyOutInterpolationType(1)]);
 
 		// strange condition
 		/*if(inInterpolationType != KeyframeInterpolationType.BEZIER && outInterpolationType != KeyframeInterpolationType.BEZIER){
@@ -165,11 +164,11 @@ function aeGetCoinsDef() {
 		var anchor1 =[ keyValue1[0] + keyOutSpart1[0], keyValue1[1] + keyOutSpart1[1]];
 		var anchor2 =[ keyValue2[0] + keyInSpart2[0], keyValue2[1] + keyInSpart2[1]];
 
-		console.log(posProp.keyValue(1));
-		console.log(posProp.keyValue(2));
-		console.log(posProp.keyOutSpatialTangent(1));
-		console.log(posProp.keyInSpatialTangent(2));
-		console.log(posProp.keyOutTemporalEase(1));
+		// console.log(posProp.keyValue(1));
+		// console.log(posProp.keyValue(2));
+		// console.log(posProp.keyOutSpatialTangent(1));
+		// console.log(posProp.keyInSpatialTangent(2));
+		// console.log(posProp.keyOutTemporalEase(1));
 
 		var keyTime1 = posProp.keyTime(1);
 		var keyTime2 = posProp.keyTime(2);
@@ -216,6 +215,8 @@ function aeGetCoinsDef() {
 			initRotation:initRotation,
 			targetRotation:targetRotation,
 			layername:layer.name,
+			layerindex:layer.index,
+			effects: (effects.numProperties > 0)
 		}
 
 		// console.log(JSON.stringify(output));
