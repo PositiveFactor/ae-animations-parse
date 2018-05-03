@@ -71,7 +71,7 @@ function cjs(aeJSON){
     var prevKey = keys[0].key;
     var clearedParams = clearUnusedParams(keys);
 
-    str += effectsExist ? 'layer exists effects\n' : '';
+    str += effectsExist ? 'WARNING! layer exists effects\n' : '';
     str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
 
     // for beautyful output
@@ -136,6 +136,7 @@ function coinsTrail(aeJSON){
   return str;
 }
 
+// legacy
 function coinsTrail2(){
   //str += '[	//   0    |  1   |   2   |   3   |  4  |  5  |  6  |  7  |   8    |   9    |    10     |     11     |      12      |      13'
 	//str += '    // DELAY  | TIME | initX | initY | B1X | B1Y | B2X | B2Y | finalX | finalY | initScale | finalScale | initRotation | targetRotation'

@@ -57,31 +57,6 @@ function parse(filename){
 	writeFile(filename, output.cjs(aeJSON));
 }
 
-// fucking magic. nothing to see here
-function layerParse(){
-	var vals = [0, 0,7, 0, 0,
-	12,2,3, 0,
-		0,30,0, 0,
-		10,0,0,29,
-		0,0,0
-	]
-
-	var keys = [5,13,16, 19, 43,
-	49,55,58,64,
-				89, 98, 110, 122,
-				129, 134, 147, 154,
-				167, 174, 180
-	]
-	var prevKey = 0;
-	for (var g=0; g<keys.length;g++){
-		var dur = keys[g]*1-prevKey;
-		var val = vals[g];
-		prevKey = keys[g]*1;
-		console.log('[{"alpha":' + (val*0.01) + '},' + dur*2 + '],');
-	}
-
-}
-
 function parseFallingCoins(){
 	var json = ae(aeGetFallingCoinsDef);
 	var str = '';
@@ -130,10 +105,5 @@ program
 .alias('fc')
 .description('parse falling coins.')
 .action(parseFallingCoins)
-
-program
-.command('layerparse')
-.description('get keys for concrete layer with procedure animation(wiggle etc.).')
-.action(layerParse)
 
 program.parse(process.argv);
