@@ -47,7 +47,7 @@ function getLen(){
 }
 
 function parse(filename){
-	var aeJSON = ae(aeGetLayersTransform);
+	var aeJSON = ae.executeSync(aeGetLayersTransform);
 
 	var filename = filename || 'default';
 	var filenameJSON = filename + '.json';

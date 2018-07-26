@@ -119,11 +119,8 @@ function aeGetLayersTransform() {
 
 
 		var strKeys = Object.keys(jsonLayer.keys);
-		console.log(strKeys);
 		var keys = strKeys.map(parseInt);
-		console.log('keys', keys);
 		keys = keys.sort();
-		console.log('after sort', keys);
 
 		var prevKey = 0;
 		for (var g=0; g<keys.length;g++){
@@ -147,6 +144,7 @@ function aeGetLayersTransform() {
 		json.layers.push(jsonLayer);
 	}
 
+	
 	return json;
 }
 
