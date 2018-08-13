@@ -4,7 +4,6 @@ const output = require('./outputMethods');
 require('./polyfills');
 
 // ae middleware ...
-const aeToJSON = require('ae-to-json/after-effects');
 const fs = require('fs');
 const path = require('path');
 const ae = require('after-effects');
@@ -13,6 +12,7 @@ ae.options.includes = [
   './node_modules/after-effects/lib/includes/es5-shim.jsx',
   './node_modules/after-effects/lib/includes/get.jsx'
 ];
+ae.options.program = path.join('c:/Program Files/Adobe','Adobe After Effects CC 2018');
 // ...
 
 // cli interface dependencies ...
