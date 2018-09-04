@@ -53,7 +53,7 @@ function parse(filename){
 	var filenameJSON = filename + '.json';
 	writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
 
-  filename = filename + '.anim';
+	filename = filename + '.anim';
 	writeFile(filename, output.cjs(aeJSON));
 }
 

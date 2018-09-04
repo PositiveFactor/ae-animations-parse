@@ -81,12 +81,12 @@ function aeGetLayersTransform() {
 	}
 
 	function getLayerDef(layer){
-		console.log(layer);
 		var jsonLayer = {
 			name:layer.name,
 			index: layer.index,
 			keys:{},
 		};
+		
 		var effects = layer['Effects'];
 		var transform = layer['Transform'];
 		var allKeys = getAllKeysForTransform(transform);
@@ -111,8 +111,6 @@ function aeGetLayersTransform() {
 			};
 			prevKey = key;
 		}
-
-		return jsonLayer;
 
 		var keysArr = [];
 		var oldKeys = [];
@@ -143,7 +141,6 @@ function aeGetLayersTransform() {
 		var jsonLayer = getLayerDef(layer);
 		json.layers.push(jsonLayer);
 	}
-
 	
 	return json;
 }
