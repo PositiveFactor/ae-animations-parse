@@ -113,8 +113,6 @@ function aeGetLayersTransform() {
 		}
 
 		var keysArr = [];
-		var oldKeys = [];
-
 
 		var strKeys = Object.keys(jsonLayer.keys);
 		var keys = strKeys.map(parseInt);
@@ -130,12 +128,12 @@ function aeGetLayersTransform() {
 		}
 
 		jsonLayer.keys = keysArr;
-		jsonLayer.oldKeys = oldKeys;
 
 		return jsonLayer;
 	}
 
-	for(var i=1; i<=numLayers;i++){
+	for(var i=1; i<=1;i++){
+	// for(var i=1; i<=numLayers;i++){
 		var layer = layers[i];
 		console.log(i, ' ', layer, ' ', layer.name);
 		var jsonLayer = getLayerDef(layer);

@@ -22,6 +22,7 @@ const Promise = require('promise');
 
 // user ae scripts ...
 const aeGetLayersTransform = require('./ae/aeGetLayersTransform');
+const aeParseAdvance = require('./ae/aeParseAdvance');
 const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
 const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
 //  ...
@@ -57,6 +58,26 @@ function parse(filename){
 	writeFile(filename, output.cjs(aeJSON));
 }
 
+function parse2(filename){
+	var aeJSON = ae.executeSync(aeParseAdvance);
+
+	var filename = filename || 'default';
+	var filenameJSON = filename + '.json';
+	writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
+
+	// filename = filename + '.anim';
+	// writeFile(filename, output.cjs(aeJSON));
+}
+
+function getMultDef(filename){
+	var file = fs.readFileSync(path.join('parsed', filename + '.json'));
+	
+	var json = JSON.parse(file);
+	
+	filename = filename + '.anim';
+	writeFile(filename, output.cjsAdv(json));
+}
+
 function parseFallingCoins(){
 	var json = ae(aeGetFallingCoinsDef);
 	var str = '';
@@ -88,6 +109,18 @@ program
   .alias('p')
   .description('parse opened ae file to ".anim" file.')
   .action(parse)
+  
+program
+  .command('parse2 [filename]')
+  .alias('p')
+  .description('parse opened ae file to ".anim" file. EXPERIMENTAL')
+  .action(parse2)
+
+program
+  .command('mult [filename]')
+  .alias('p')
+  .description('create ".anim" file from ".json". EXPERIMENTAL')
+  .action(getMultDef)  
 
 program
   .command('len')

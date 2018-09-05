@@ -1,6 +1,9 @@
 'use strict'
 
+var _ = require('lodash')
 var JSON5 = require('json5-utils')
+
+const FRAMERATE = 30;
 
 function compareKeyframes(a, b) {
   return a.key - b.key;
@@ -14,9 +17,21 @@ function _tr2(jsonLayer){
 }
 
 function getViewKeyframe(keyframe){
-  var seconds = Math.floor(keyframe / 30);
-  var frames = keyframe % 30;
+  var seconds = Math.floor(keyframe / FRAMERATE);
+  var frames = keyframe % FRAMERATE;
   return `${seconds}:${frames}`;
+}
+
+function parseTime(rawTime){
+	var fullframes = Math.floor(rawTime*FRAMERATE);			
+	var seconds = Math.floor(fullframes / FRAMERATE);
+	var frames = Math.floor(fullframes % FRAMERATE);
+	return {
+		seconds:seconds, 
+		frames:frames, 
+		fullframes:fullframes, 
+		str: String(seconds)  + ':' + String(frames)
+	}
 }
 
 var DEFAULTS = {
@@ -27,30 +42,31 @@ var DEFAULTS = {
   scaleX:1, scaleY:1,
 }
 
-function clearUnusedParams(keys){
-  var temp = JSON.parse(JSON.stringify(DEFAULTS));
-  var paramNames = Object.keys(DEFAULTS);
-  var unused = [];
-  var used = [];
-  var ret = [];
+function clearUnusedParams(keys) {
+		
+	var temp = JSON.parse(JSON.stringify(DEFAULTS));
+	var paramNames = Object.keys(DEFAULTS);
+	var unused = [];
+	var used = [];
+	var ret = [];
 
-  var prevTf = JSON.parse(JSON.stringify(DEFAULTS));
-  for(var j=0;j<keys.length;j++) {
-    var newKey = {};
-    var tf = keys[j].tf;
-    for(var p=0;p<paramNames.length;p++) {
-      var param = paramNames[p];
-      if(tf[param] === DEFAULTS[param]){
-        used.push(param);
-      }
-      if(tf[param] !== prevTf[param]){
-        newKey[param] = tf[param];
-      }
-    }
-    ret.push(newKey);
-    prevTf = tf;
-  }
-  return ret;
+	var prevTf = JSON.parse(JSON.stringify(DEFAULTS));
+	for(var j=0;j<keys.length;j++) {
+	var newKey = {};
+	var tf = keys[j].tf;
+	for(var p=0;p<paramNames.length;p++) {
+	  var param = paramNames[p];
+	  if(tf[param] === DEFAULTS[param]){
+		used.push(param);
+	  }
+	  if(tf[param] !== prevTf[param]){
+		newKey[param] = tf[param];
+	  }
+	}
+	ret.push(newKey);
+	prevTf = tf;
+	}
+	return ret;
 }
 
 function getFormatedParams(params){
@@ -58,43 +74,193 @@ function getFormatedParams(params){
 }
 
 // output like createjs animation definition.
-function cjs(aeJSON){
-  var str = '';
-	var layers = aeJSON.layers;
-	for (var i=0;i<aeJSON.layers.length;i++){
-    var layer = _tr2(aeJSON.layers[i]);
+function cjs(sceneJSON){
+	console.log(sceneJSON);
+	
+	var str = '';
+	var layers = sceneJSON.layers;
+	
+	for (var i=0, len = layers.length; i<len; i++){
+		var layer = _tr2(layers[i]);
 		var name = layer.name;
-    var index = layer.index;
-    var effectsExist = layer.effectsExist;
+		var index = layer.index;
 		var keys = layer.keys;
-		var oldKeys = layer.oldKeys;
-    var prevKey = keys[0].key;
-    var clearedParams = clearUnusedParams(keys);
+		var prevKey = keys[0].key;
+		var clearedParams = clearUnusedParams(keys);
+		
+		
 
-    str += effectsExist ? 'WARNING! layer exists effects\n' : '';
-    str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
+		str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
 
-    // for beautyful output
-    var stringParts = [];
-    var maxBaseLength = 0;
+		// for beautyful output
+		var stringParts = [];
+		var maxBaseLength = 0;
 		for(var j=0;j<keys.length;j++) {
-      var ending = (j===keys.length-1) ? '' : '\n';
-      var paramsString = getFormatedParams(clearedParams[j]);
-      var keyframe = keys[j].key;
-      var duration = (keyframe-prevKey);
+			var ending = (j===keys.length-1) ? '' : '\n';
+			var paramsString = getFormatedParams(clearedParams[j]);
+			
+			var keyframe = keys[j].key;
+			var duration = (keyframe-prevKey);
 
-      var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
-      var viewBase = paramsString === '{}' ? `\t.wait(${duration*2})` : `\t.to(${paramsString}, ${duration*2})`;
+			var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
+			var viewBase = paramsString === '{}' ? `\t.wait(${duration*2})` : `\t.to(${paramsString}, ${duration*2})`;
 
-      stringParts.push([viewBase, viewKeyframe]);
-      maxBaseLength = Math.max(viewBase.length, maxBaseLength);
-      prevKey = keyframe;
+			stringParts.push([viewBase, viewKeyframe]);
+			maxBaseLength = Math.max(viewBase.length, maxBaseLength);
+			prevKey = keyframe;
 		}
 
-    stringParts = stringParts.map(function(it){
-      return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
-    });
-		str += stringParts.join('\n') + '\n\n';
+		stringParts = stringParts.map(function(it){
+		  return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
+		});
+			str += stringParts.join('\n') + '\n\n';
+	}
+	str += '\n';
+
+  return str;
+}
+
+
+function getInitPropsParams(initProps, exeptProps){
+	// console.log(initProps)
+	var props = {};
+	
+	_.forIn(initProps, function(value, key){
+		// console.log(value)
+		if(exeptProps.indexOf(key) === -1){
+			_.extend(props, value)
+		}
+	})
+	
+	return props;
+}
+
+function parseKeysGroup(group, groupName){
+	
+}
+
+function getKeys(keys){
+	var json = {'keys': []}
+	
+	_.forIn(keys, function(keyGroup, key){
+		console.log(key)
+		
+		var prevKeyTime = 0;
+		keyGroup.forEach(function(keyFrame){
+			var keyFrameValue = keyFrame.value;
+			var interp = keyFrame.interpolation;
+			var keyTime = keyFrame.key;
+			var keyTimeStr = keyFrame.keyStr;
+			
+			var interpType = '';
+			if(interp){
+				interpType = interp['in'].influence ? ', createjs.Ease.sineOut' : '';
+			}
+			
+			// json.keys.push([JSON5.stringify(keyFrameValue, '', ''), keyTime - prevKeyTime])
+			json.keys.push(`to(${JSON5.stringify(keyFrameValue, '', ' ')}, ${keyTime - prevKeyTime}${interpType}) // ${keyTime} ${keyTimeStr}`)
+		})
+		
+		// parseKeysGroup(value, key)
+	})
+	
+	return json;
+}
+
+function getGroupString(group, groupName){
+	var str = '';
+	var json = {
+		positions: [], regX: 0, regY: 0,
+		keys:[],
+	};
+	var layers = group.layers
+	var firstLayer = layers[0].layer
+	var name = group.name
+	var index = group.index
+	
+	json.regX = firstLayer.initProps.reg.regX;
+	json.regY = firstLayer.initProps.reg.regY;
+	if(firstLayer.blendMode === 'SCREEN' | 'ADD' | 'LIGHTEN'){
+		json.compositeOperation = 'lighter';
+	}
+	
+	for (var i=0, len=layers.length; i<len; i++){
+		var layer = layers[i]
+		// console.log(layer);
+		json.positions.push(getInitPropsParams(layer.layer.initProps, ['reg']));
+		
+		var keys = layer.layer.keys;
+		var cjsKeys = getKeys(keys)
+		json.keys.push(cjsKeys);
+	}
+	
+	return JSON.stringify(json, null, '  ');
+}
+
+// output like createjs animation definition.
+function cjsAdv(sceneJSON){
+	var str = ''
+	var layers = sceneJSON.layers
+	
+	var groups = {}
+	for (var j=0, len=layers.length; j<len; j++){
+		var layer = layers[j]
+		var name = layer.name
+		var index = layer.index
+		
+		if(!groups[name]){
+			groups[name] = {
+				layers:[]
+			}
+		}
+		groups[name].layers.push({index:index, name:name, layer:layer})
+	}
+	
+	// console.log(groups)
+	
+	_.forIn(groups, function(value, key){
+		str += getGroupString(groups[key], key)
+	})
+	
+	return str;
+	
+	for (var i=0, len=layers.length; i<len; i++){
+		
+		
+		
+		continue;
+		var layer = _tr2(layers[i]);
+		var name = layer.name;
+		var index = layer.index;
+		var effectsExist = layer.effectsExist;
+		var keys = layer.keys;
+		var prevKey = keys[0].key;
+		var clearedParams = clearUnusedParams(keys);
+
+		str += effectsExist ? 'WARNING! layer exists effects\n' : '';
+		str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
+
+		// for beautyful output
+		var stringParts = [];
+		var maxBaseLength = 0;
+		for(var j=0;j<keys.length;j++) {
+			var ending = (j===keys.length-1) ? '' : '\n';
+			var paramsString = getFormatedParams(clearedParams[j]);
+			var keyframe = keys[j].key;
+			var duration = (keyframe-prevKey);
+
+			var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
+			var viewBase = paramsString === '{}' ? `\t.wait(${duration*2})` : `\t.to(${paramsString}, ${duration*2})`;
+
+			stringParts.push([viewBase, viewKeyframe]);
+			maxBaseLength = Math.max(viewBase.length, maxBaseLength);
+			prevKey = keyframe;
+		}
+
+		stringParts = stringParts.map(function(it){
+		  return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
+		});
+			str += stringParts.join('\n') + '\n\n';
 	}
 	str += '\n';
 
@@ -191,5 +357,6 @@ function coinsTrail2(){
 
 
 module.exports.cjs = cjs;
+module.exports.cjsAdv = cjsAdv;
 module.exports.coinsTrail = coinsTrail;
 module.exports.coinsTrail2 = coinsTrail2;
