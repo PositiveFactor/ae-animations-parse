@@ -10,9 +10,11 @@ const ae = require('after-effects');
 ae.options.includes = [
   './node_modules/after-effects/lib/includes/console.jsx',
   './node_modules/after-effects/lib/includes/es5-shim.jsx',
-  './node_modules/after-effects/lib/includes/get.jsx'
+  './node_modules/after-effects/lib/includes/get.jsx',
+  // './includes/standard.jsx'
 ];
 ae.options.program = path.join('c:/Program Files/Adobe','Adobe After Effects CC 2018');
+ae.options.errorHandling = true;
 // ...
 
 // cli interface dependencies ...
@@ -25,6 +27,7 @@ const aeGetLayersTransform = require('./ae/aeGetLayersTransform');
 const aeParseAdvance = require('./ae/aeParseAdvance');
 const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
 const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
+const aeParseFramedLayer = require('./ae/aeParseFramedLayer');
 //  ...
 
 const baseFolder = 'parsed';
@@ -45,6 +48,12 @@ function getLen(){
   var func = require('./ae/aeGetSceneLength');
   var len = ae(func);
   return len;
+}
+
+function pp(layerNum){
+	var mycommand = new ae.Command(aeParseFramedLayer);
+	var res = ae.executeSync(mycommand, layerNum);
+	console.log('outside:', res);
 }
 
 function parse(filename){
@@ -109,6 +118,11 @@ program
   .alias('p')
   .description('parse opened ae file to ".anim" file.')
   .action(parse)
+  
+program
+  .command('pp [value]')
+  .description('parse opened ae file to ".anim" file.')
+  .action(pp)
   
 program
   .command('parse2 [filename]')
