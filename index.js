@@ -50,10 +50,10 @@ function getLen(){
   return len;
 }
 
-function pp(layerNum){
+function pp(layerIndex, isFramed){
 	var mycommand = new ae.Command(aeParseFramedLayer);
-	var res = ae.executeSync(mycommand, layerNum);
-	console.log('outside:', res);
+	var res = ae.executeSync(mycommand, layerIndex, isFramed === 'true');
+	console.log(output.cjsLayer(res));
 }
 
 function parse(filename){
@@ -120,7 +120,7 @@ program
   .action(parse)
   
 program
-  .command('pp [value]')
+  .command('pp [layerIndex] [isFramed]')
   .description('parse opened ae file to ".anim" file.')
   .action(pp)
   

@@ -70,56 +70,79 @@ function clearUnusedParams(keys) {
 }
 
 function getFormatedParams(params){
-  return JSON5.stringify(params, '', '');
+  return JSON5.stringify(params, '', '').replace(',', ', ');
 }
 
-// output like createjs animation definition.
-function cjs(sceneJSON){
-	console.log(sceneJSON);
-	
+function cjsLayer(layerDef){
 	var str = '';
-	var layers = sceneJSON.layers;
 	
-	for (var i=0, len = layers.length; i<len; i++){
-		var layer = _tr2(layers[i]);
-		var name = layer.name;
-		var index = layer.index;
-		var keys = layer.keys;
-		var prevKey = keys[0].key;
-		var clearedParams = clearUnusedParams(keys);
+	var layer = _tr2(layerDef);
+	var name = layer.name;
+	var index = layer.index;
+	var keys = layer.keys;
+	var prevKey = keys[0].key;
+	var clearedParams = clearUnusedParams(keys);
+
+	str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
+
+	// for beautyful output
+	var stringParts = [];
+	var maxBaseLength = 0;
+	
+	var prevWait = false;
+	
+	for(var j=0;j<keys.length;j++) {
+		var ending = (j===keys.length-1) ? '' : '\n';
+		var paramsString = getFormatedParams(clearedParams[j]);
 		
+		var keyframe = keys[j].key;
+		var duration = (keyframe-prevKey);
+
+		var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
 		
-
-		str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
-
-		// for beautyful output
-		var stringParts = [];
-		var maxBaseLength = 0;
-		for(var j=0;j<keys.length;j++) {
-			var ending = (j===keys.length-1) ? '' : '\n';
-			var paramsString = getFormatedParams(clearedParams[j]);
-			
-			var keyframe = keys[j].key;
-			var duration = (keyframe-prevKey);
-
-			var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
-			var viewBase = paramsString === '{}' ? `\t.wait(${duration*2})` : `\t.to(${paramsString}, ${duration*2})`;
-
-			stringParts.push([viewBase, viewKeyframe]);
-			maxBaseLength = Math.max(viewBase.length, maxBaseLength);
-			prevKey = keyframe;
+		var isWait = paramsString === '{}';
+		var viewBase = '';
+		if(isWait){
+			prevWait = true;
+			// viewBase = `\t.wait(${duration*2})`;
 		}
-
-		stringParts = stringParts.map(function(it){
-		  return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
-		});
-			str += stringParts.join('\n') + '\n\n';
+		else{
+			if(prevWait){
+				viewBase = '\t // --- // --- \n';
+				prevWait = false;
+			}
+			else{
+				viewKeyframe = ''
+			}
+			var valuePartView = `\t.to(${paramsString}, ${duration*2})`;
+			viewBase += valuePartView;
+			
+			stringParts.push([viewBase, viewKeyframe]);
+			maxBaseLength = Math.max(valuePartView.length, maxBaseLength);
+			
+		}
+		
+		prevKey = keyframe;
 	}
-	str += '\n';
+
+	stringParts = stringParts.map(function(it){
+	  return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
+	});
+	str += stringParts.join('\n') + '\n\n';
 
   return str;
 }
 
+// output like createjs animation definition.
+function cjs(sceneJSON){
+	var str = '';
+	var layers = sceneJSON.layers;
+	for (var i=0, len = layers.length; i<len; i++){
+		str += cjsLayer(layers[i]); 
+	}
+	str += '\n';
+  return str;
+}
 
 function getInitPropsParams(initProps, exeptProps){
 	// console.log(initProps)
@@ -304,7 +327,7 @@ function coinsTrail(aeJSON){
 
 // legacy
 function coinsTrail2(){
-  //str += '[	//   0    |  1   |   2   |   3   |  4  |  5  |  6  |  7  |   8    |   9    |    10     |     11     |      12      |      13'
+	//str += '[	//   0    |  1   |   2   |   3   |  4  |  5  |  6  |  7  |   8    |   9    |    10     |     11     |      12      |      13'
 	//str += '    // DELAY  | TIME | initX | initY | B1X | B1Y | B2X | B2Y | finalX | finalY | initScale | finalScale | initRotation | targetRotation'
 
 	//str += '    [    0    ,  30  ,  881  ,  556  , 1094, 158 , 1604, 354 ,  1766  ,  1131  ,   0.6     ,   0.6      ,      29      ,      53 		], // 0'
@@ -357,6 +380,7 @@ function coinsTrail2(){
 
 
 module.exports.cjs = cjs;
+module.exports.cjsLayer = cjsLayer;
 module.exports.cjsAdv = cjsAdv;
 module.exports.coinsTrail = coinsTrail;
 module.exports.coinsTrail2 = coinsTrail2;
