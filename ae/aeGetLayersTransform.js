@@ -81,12 +81,12 @@ function aeGetLayersTransform() {
 	}
 
 	function getLayerDef(layer){
+		console.log(layer);
 		var jsonLayer = {
 			name:layer.name,
 			index: layer.index,
 			keys:{},
 		};
-		
 		var effects = layer['Effects'];
 		var transform = layer['Transform'];
 		var allKeys = getAllKeysForTransform(transform);
@@ -112,7 +112,11 @@ function aeGetLayersTransform() {
 			prevKey = key;
 		}
 
+		return jsonLayer;
+
 		var keysArr = [];
+		var oldKeys = [];
+
 
 		var strKeys = Object.keys(jsonLayer.keys);
 		var keys = strKeys.map(parseInt);
@@ -128,17 +132,18 @@ function aeGetLayersTransform() {
 		}
 
 		jsonLayer.keys = keysArr;
+		jsonLayer.oldKeys = oldKeys;
 
 		return jsonLayer;
 	}
 
-	//for(var i=1; i<=1;i++){
 	for(var i=1; i<=numLayers;i++){
 		var layer = layers[i];
 		console.log(i, ' ', layer, ' ', layer.name);
 		var jsonLayer = getLayerDef(layer);
 		json.layers.push(jsonLayer);
 	}
+
 	
 	return json;
 }
