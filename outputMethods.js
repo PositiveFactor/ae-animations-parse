@@ -54,7 +54,7 @@ function clearUnusedParams(keys){
 }
 
 function getFormatedParams(params){
-  return JSON5.stringify(params, '', '');
+  return JSON5.stringify(params, '', ' ');
 }
 
 // output like createjs animation definition.
@@ -62,38 +62,39 @@ function cjs(aeJSON){
   var str = '';
 	var layers = aeJSON.layers;
 	for (var i=0;i<aeJSON.layers.length;i++){
-    var layer = _tr2(aeJSON.layers[i]);
-		var name = layer.name;
-    var index = layer.index;
-    var effectsExist = layer.effectsExist;
-		var keys = layer.keys;
-		var oldKeys = layer.oldKeys;
-    var prevKey = keys[0].key;
-    var clearedParams = clearUnusedParams(keys);
+		var layer = _tr2(aeJSON.layers[i]);
+			var name = layer.name;
+		var index = layer.index;
+		var effectsExist = layer.effectsExist;
+			var keys = layer.keys;
+			var oldKeys = layer.oldKeys;
+		var prevKey = keys[0].key;
+		var clearedParams = clearUnusedParams(keys);
 
-    str += effectsExist ? 'WARNING! layer exists effects\n' : '';
-    str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
+		str += effectsExist ? 'WARNING! layer exists effects\n' : '';
+		str += `${index} ${name}\ncreatejs.Tween.get( this._fContainer_cjc, {useTicks:true})\n`;
 
-    // for beautyful output
-    var stringParts = [];
-    var maxBaseLength = 0;
+		// for beautyful output
+		var stringParts = [];
+		var maxBaseLength = 0;
 		for(var j=0;j<keys.length;j++) {
-      var ending = (j===keys.length-1) ? '' : '\n';
-      var paramsString = getFormatedParams(clearedParams[j]);
-      var keyframe = keys[j].key;
-      var duration = (keyframe-prevKey);
+			var ending = (j===keys.length-1) ? '' : '\n';
+			var paramsString = getFormatedParams(clearedParams[j]);
+			var keyframe = keys[j].key;
+			var duration = (keyframe-prevKey);
 
-      var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
-      var viewBase = paramsString === '{}' ? `\t.wait(${duration*2})` : `\t.to(${paramsString}, ${duration*2})`;
+			var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
+			var viewBase = paramsString === '{}' ? `\t.wait(${duration*2})` : `\t.to(${paramsString}, ${duration*2})`;
 
-      stringParts.push([viewBase, viewKeyframe]);
-      maxBaseLength = Math.max(viewBase.length, maxBaseLength);
-      prevKey = keyframe;
+			stringParts.push([viewBase, viewKeyframe]);
+			maxBaseLength = Math.max(viewBase.length, maxBaseLength);
+			prevKey = keyframe;
 		}
 
-    stringParts = stringParts.map(function(it){
-      return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
-    });
+		stringParts = stringParts.map(function(it){
+		  return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
+		});
+		
 		str += stringParts.join('\n') + '\n\n';
 	}
 	str += '\n';
