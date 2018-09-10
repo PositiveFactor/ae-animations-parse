@@ -70,7 +70,7 @@ function clearUnusedParams(keys) {
 }
 
 function getFormatedParams(params){
-  return JSON5.stringify(params, '', '').replace(',', ', ');
+  return JSON5.stringify(params, '', '').replace(/,/gm, ', ');
 }
 
 function cjsLayer(layerDef){
@@ -112,7 +112,7 @@ function cjsLayer(layerDef){
 				prevWait = false;
 			}
 			else{
-				viewKeyframe = ''
+				// viewKeyframe = ''
 			}
 			var valuePartView = `\t.to(${paramsString}, ${duration*2})`;
 			viewBase += valuePartView;

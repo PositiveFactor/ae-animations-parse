@@ -1,12 +1,17 @@
-function aeGetLayersTransform(layerIndex, isFramed) {
-	console.log(layerIndex, isFramed);
+function aeGetLayersTransform(layerIndex, isFramed, options) {
+	
+	var scaleMult = 1;
+	if(options && options.scaleMult){
+		scaleMult = options.scaleMult;
+	}	
+	
 	var KOEF = 1780/1920;
 	var FRAMERATE = 30;
 	var TRANSFORM_USEFULL = [1,2,6,10,11];
 	var TRANSFORM_PROPERTY_NAMES = {
 		"1": {name:["regX", "regY"], mult:KOEF}, 		// 1
 		"2": {name:["x", "y"], mult:KOEF},			// 2
-		"6": {name:["scaleX", "scaleY"], mult:0.01*1.04}, 	// 6
+		"6": {name:["scaleX", "scaleY"], mult:0.01*scaleMult}, 	// 6
 		"10": {name:"rotation"}, 			// 10
 		"11": {name:"alpha", mult:0.01},				// 11
 	};
@@ -68,24 +73,9 @@ function aeGetLayersTransform(layerIndex, isFramed) {
 	function getAllFrames(transform){
 		var keys = {};
 		var sceneLen = getSceneLength() * FRAMERATE;
-		//keys[sceneLen] = true;
 		for (var b=0; b < sceneLen; b++){
 			keys[b/FRAMERATE] = true;
 		}
-		
-		/*for (var b=0;b<TRANSFORM_USEFULL.length;b++){
-			var propId = TRANSFORM_USEFULL[b];
-			var prop = transform.property(propId);
-
-			if(prop.numKeys){
-				for (var j=1; j<=prop.numKeys;j++){
-					var key = prop.keyTime(j);
-					if(!keys.hasOwnProperty(key)){
-						keys[key] = true;
-					}
-				}
-			}
-		}*/
 		return Object.keys(keys).sort();
 	}
 	

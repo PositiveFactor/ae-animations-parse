@@ -51,8 +51,16 @@ function getLen(){
 }
 
 function pp(layerIndex, isFramed){
+	console.log('program.scaleMult', program.scaleMult);
+	
+	var options = {};
+	if(program.scaleMult)
+	{
+		options.scaleMult = program.scaleMult;
+	}
+	
 	var mycommand = new ae.Command(aeParseFramedLayer);
-	var res = ae.executeSync(mycommand, layerIndex, isFramed === 'true');
+	var res = ae.executeSync(mycommand, layerIndex, isFramed === 'true', options);
 	console.log(output.cjsLayer(res));
 }
 
@@ -112,6 +120,8 @@ function parseCoins(filename){
 
 program
   .version('0.0.1')
+  .option('-s, --scale-mult [value]', 'scale mult')
+  .option('-r, --relative-positions', 'relative positions')
 
 program
   .command('parse [filename]')
