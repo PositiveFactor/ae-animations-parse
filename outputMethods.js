@@ -156,7 +156,7 @@ function ue(sceneJSON){
 		for(let i in item.keys){
 			let frame = {
 				x : item.keys[i].x,
-				y : item.keys[i].x,
+				y : item.keys[i].y,
 				sx : item.keys[i].scaleX,
 				sy : item.keys[i].scaleY,
 				r : (item.keys[i].rotation / 180) * Math.PI,

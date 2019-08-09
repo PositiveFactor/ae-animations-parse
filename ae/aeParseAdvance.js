@@ -100,7 +100,7 @@ function aeGetLayersTransform() {
 		INTERPOLATIONS[KeyframeInterpolationType.BEZIER] = "BEZIER";
 		INTERPOLATIONS[KeyframeInterpolationType.HOLD] = "HOLD";
 		
-	var KOEF = 1780/1920;
+	var KOEF = 1//;1780/1920;
 	var FRAMERATE = 30;
 	var TRANSFORM_USEFULL_KEYS = [1,2,6,10,11];
 	var TRANSFORM_PROPERTY_NAMES = {

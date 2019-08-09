@@ -1,5 +1,5 @@
 function aeGetCoinsDef() {
-	var KOEF = 1780/1920;
+	var KOEF = 1//;1780/1920;
 	var FRAMERATE = 30;
 	var TRANSFORM_USEFULL = [1,2,6,10,11];
 	var TRANSFORM_PROPERTY_NAMES = {
