@@ -13,7 +13,7 @@ ae.options.includes = [
   './node_modules/after-effects/lib/includes/get.jsx',
   // './includes/standard.jsx'
 ];
-ae.options.program = path.join('c:/Program Files/Adobe','Adobe After Effects CC 2018');
+ae.options.program = path.join('c:/Program Files/Adobe','Adobe After Effects CC 2019');
 ae.options.errorHandling = true;
 // ...
 
@@ -52,13 +52,23 @@ function getLen(){
 
 function pp(layerIndex, isFramed){
 	console.log('program.scaleMult', program.scaleMult);
-	
+
 	var options = {};
 	if(program.scaleMult)
 	{
 		options.scaleMult = program.scaleMult;
 	}
-	
+
+  if(program.positionKoefficient)
+	{
+		options.positionKoefficient = program.positionKoefficient;
+	}
+
+  if(program.framerate)
+	{
+		options.framerate = program.framerate;
+	}
+
 	var mycommand = new ae.Command(aeParseFramedLayer);
 	var res = ae.executeSync(mycommand, layerIndex, isFramed === 'true', options);
 	console.log(output.cjsLayer(res));
@@ -75,6 +85,28 @@ function parse(filename){
 	writeFile(filename, output.cjs(aeJSON));
 }
 
+function parseUE(filename){
+	var aeJSON = ae.executeSync(aeGetLayersTransform);
+
+	var filename = filename || 'default';
+	var filenameJSON = filename + '.json';
+	writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
+
+	let toParse = {};
+	if(aeJSON && aeJSON.layers && aeJSON.layers.length){
+		for (let i = 0; i < aeJSON.layers.length; i++) {
+			var mycommand = new ae.Command(aeParseFramedLayer);
+			let layerIndex = aeJSON.layers[i].index;
+			var res = ae.executeSync(mycommand, layerIndex, true, {});
+			toParse[layerIndex] = res;
+		}
+	}
+
+	filename = filename + '-UE.anim';
+	// writeFile(filename, JSON.stringify(toParse, null, '\t'));
+	writeFile(filename, output.ue(toParse));
+}
+
 function parse2(filename){
 	var aeJSON = ae.executeSync(aeParseAdvance);
 
@@ -88,9 +120,9 @@ function parse2(filename){
 
 function getMultDef(filename){
 	var file = fs.readFileSync(path.join('parsed', filename + '.json'));
-	
+
 	var json = JSON.parse(file);
-	
+
 	filename = filename + '.anim';
 	writeFile(filename, output.cjsAdv(json));
 }
@@ -122,18 +154,26 @@ program
   .version('0.0.1')
   .option('-s, --scale-mult [value]', 'scale mult')
   .option('-r, --relative-positions', 'relative positions')
+  .option('-r, --framerate', 'framerate')
+  .option('-r, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
 
 program
   .command('parse [filename]')
   .alias('p')
   .description('parse opened ae file to ".anim" file.')
   .action(parse)
-  
+
+program
+  .command('parseue [filename]')
+  .alias('p')
+  .description('parseUE opened ae file to ".anim" file.')
+  .action(parseUE)
+
 program
   .command('pp [layerIndex] [isFramed]')
   .description('parse opened ae file to ".anim" file.')
   .action(pp)
-  
+
 program
   .command('parse2 [filename]')
   .alias('p')
@@ -144,7 +184,7 @@ program
   .command('mult [filename]')
   .alias('p')
   .description('create ".anim" file from ".json". EXPERIMENTAL')
-  .action(getMultDef)  
+  .action(getMultDef)
 
 program
   .command('len')

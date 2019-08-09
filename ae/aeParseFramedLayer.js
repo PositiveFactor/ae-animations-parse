@@ -1,16 +1,25 @@
 function aeGetLayersTransform(layerIndex, isFramed, options) {
-	
+
 	var scaleMult = 1;
 	if(options && options.scaleMult){
 		scaleMult = options.scaleMult;
-	}	
-	
-	var KOEF = 1780/1920;
-	var FRAMERATE = 30;
+	}
+
+	var positionCoefficient = 1;
+	if(options && options.positionKoefficient){
+		positionCoefficient = options.positionKoefficient;
+	}
+
+	var framerate = 30;
+	if(options && options.framerate){
+		framerate = options.framerate;
+	}
+
+	var FRAMERATE = framerate;
 	var TRANSFORM_USEFULL = [1,2,6,10,11];
 	var TRANSFORM_PROPERTY_NAMES = {
-		"1": {name:["regX", "regY"], mult:KOEF}, 		// 1
-		"2": {name:["x", "y"], mult:KOEF},			// 2
+		"1": {name:["regX", "regY"], mult:positionCoefficient}, 		// 1
+		"2": {name:["x", "y"], mult:positionCoefficient},			// 2
 		"6": {name:["scaleX", "scaleY"], mult:0.01*scaleMult}, 	// 6
 		"10": {name:"rotation"}, 			// 10
 		"11": {name:"alpha", mult:0.01},				// 11
@@ -21,7 +30,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 	var active = app.project.activeItem;
 	var layers = active.layers;
 	var numLayers = active.numLayers;
-	
+
 	function cropValue(val){
 		return Math.floor((val)*1000) / 1000;
 	}
@@ -69,7 +78,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 			_saveKeyframe(gkeys, key, propName, val);
 		}
 	};
-	
+
 	function getAllFrames(transform){
 		var keys = {};
 		var sceneLen = getSceneLength() * FRAMERATE;
@@ -78,7 +87,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		}
 		return Object.keys(keys).sort();
 	}
-	
+
 
 	function getAllKeysForTransform(transform){
 		var keys = {'0':true};
@@ -110,7 +119,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		var effects = layer['Effects'];
 		var transform = layer['Transform'];
 		jsonLayer.effectsExist = !!effects;
-		
+
 		var allKeys = getAllKeysForTransform(transform);
 
 		var prevKey = null;
@@ -156,7 +165,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 
 		return jsonLayer;
 	}
-	
+
 	function getLayerDefFramed(layer){
 		console.log(layer);
 		var jsonLayer = {
@@ -167,7 +176,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		var effects = layer['Effects'];
 		var transform = layer['Transform'];
 		jsonLayer.effectsExist = !!effects;
-		
+
 		// var allKeys = getAllKeysForTransform(transform);
 		var allKeys = getAllFrames(transform);
 
@@ -215,10 +224,10 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 	}
 
 	var layer = layers[layerIndex];
-	var jsonLayer = isFramed 
-		? getLayerDefFramed(layer) 
+	var jsonLayer = isFramed
+		? getLayerDefFramed(layer)
 		: getLayerDef(layer);
-			
+
 	return jsonLayer;
 }
 

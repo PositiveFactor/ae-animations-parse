@@ -19,7 +19,7 @@
     "inquirer": "^5.0.0",
     "inquirer-autocomplete-prompt": "^0.12.1",
     "json5-utils": "^0.3.1",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.15",
     "promise": "^8.0.1",
     "regex": "^0.1.1"
   }

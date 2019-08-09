@@ -74,7 +74,7 @@ function getFormatedParams(params){
 }
 
 function cjsLayer(layerDef){
-	var str = '';
+	var str = '\n';
 	
 	var layer = _tr2(layerDef);
 	var name = layer.name;
@@ -128,7 +128,7 @@ function cjsLayer(layerDef){
 	stringParts = stringParts.map(function(it){
 	  return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
 	});
-	str += stringParts.join('\n') + '\n\n';
+	str += stringParts.join('\n') + '\n\n\n';
 
   return str;
 }
@@ -142,6 +142,32 @@ function cjs(sceneJSON){
 	}
 	str += '\n';
   return str;
+}
+
+
+//update for UE
+function ue(sceneJSON){
+	let result = {};
+	for(let k in sceneJSON){
+		let item = sceneJSON[k];
+
+		let name = item.name.split(' ').join('_') + '_' + item.index;
+		let innerRes = {'samples' : []};
+		for(let i in item.keys){
+			let frame = {
+				x : item.keys[i].x,
+				y : item.keys[i].x,
+				sx : item.keys[i].scaleX,
+				sy : item.keys[i].scaleY,
+				r : (item.keys[i].rotation / 180) * Math.PI,
+				a : item.keys[i].alpha
+			};
+			innerRes.samples.push(frame);
+		}
+		result[name] = innerRes;
+	}
+
+	return JSON.stringify(result, null, '\t');
 }
 
 function getInitPropsParams(initProps, exeptProps){
@@ -380,6 +406,7 @@ function coinsTrail2(){
 
 
 module.exports.cjs = cjs;
+module.exports.ue = ue;
 module.exports.cjsLayer = cjsLayer;
 module.exports.cjsAdv = cjsAdv;
 module.exports.coinsTrail = coinsTrail;
