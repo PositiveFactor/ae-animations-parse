@@ -81,7 +81,6 @@ function aeGetLayersTransform() {
 	}
 
 	function getLayerDef(layer){
-		console.log(layer);
 		var jsonLayer = {
 			name:layer.name,
 			index: layer.index,
@@ -139,12 +138,11 @@ function aeGetLayersTransform() {
 
 	for(var i=1; i<=numLayers;i++){
 		var layer = layers[i];
-		console.log(i, ' ', layer, ' ', layer.name);
+		// console.log(i, ' ', layer, ' ', layer.name);
 		var jsonLayer = getLayerDef(layer);
 		json.layers.push(jsonLayer);
 	}
 
-	
 	return json;
 }
 

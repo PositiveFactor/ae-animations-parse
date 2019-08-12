@@ -16,7 +16,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 	}
 
 	var FRAMERATE = framerate;
-	var TRANSFORM_USEFULL = [1,2,6,10,11];
+	var TRANSFORM_USEFULL = [1, 2, 6, 10, 11];
 	var TRANSFORM_PROPERTY_NAMES = {
 		"1": {name:["regX", "regY"], mult:positionCoefficient}, 		// 1
 		"2": {name:["x", "y"], mult:positionCoefficient},			// 2
@@ -79,10 +79,13 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		}
 	};
 
-	function getAllFrames(transform){
+	function getAllFrames(transform, inPointFrame, outPointFrame){
 		var keys = {};
 		var sceneLen = getSceneLength() * FRAMERATE;
-		for (var b=0; b < sceneLen; b++){
+		inPointFrame = inPointFrame ? inPointFrame : 0;
+		outPointFrame = outPointFrame ? outPointFrame : sceneLen;
+
+		for (var b=inPointFrame; b <= outPointFrame; b++){
 			keys[b/FRAMERATE] = true;
 		}
 		return Object.keys(keys).sort();
@@ -173,27 +176,38 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 			index: layer.index,
 			keys:{},
 		};
+
 		var effects = layer['Effects'];
 		var transform = layer['Transform'];
 		jsonLayer.effectsExist = !!effects;
 
+		var oneFrameTime = 1/30;
+		var inPointFrame =  layer.inPoint/oneFrameTime;
+		var outPointFrame =  layer.outPoint/oneFrameTime;
+
+		console.log(r, ' layer.inPoint ', layer.inPoint/oneFrameTime);
+		console.log(r, ' layer.outPoint ', layer.outPoint/oneFrameTime);
+
 		// var allKeys = getAllKeysForTransform(transform);
-		var allKeys = getAllFrames(transform);
+		var allKeys = getAllFrames(transform, inPointFrame, outPointFrame);
 
 		var prevKey = null;
-		for (var r=0;r<allKeys.length;r++){
+		for (var r=0; r<allKeys.length; r++) {
 			var key = allKeys[r];
 			jsonLayer.keys[Math.round(key * FRAMERATE)] = {};
 
-			for (var d=0;d<TRANSFORM_USEFULL.length;d++){
+			for (var d=0; d<TRANSFORM_USEFULL.length; d++){
 				var propId = TRANSFORM_USEFULL[d];
 				var prop = transform.property(propId);
-				var val = prop.valueAtTime(key, true);
-				if(prevKey !== null){
-					var prevVal = prop.valueAtTime(prevKey, true);
-				}
+				// console.log('prop.expression', prop.expression);
+				if(prop.numKeys || prop.expression){
+					var val = prop.valueAtTime(key, true);
+					if(prevKey !== null){
+						var prevVal = prop.valueAtTime(prevKey, true);
+					}
 
-				addKey(jsonLayer.keys, key, propId, val);
+					addKey(jsonLayer.keys, key, propId, val);
+				}
 			};
 			prevKey = key;
 		}

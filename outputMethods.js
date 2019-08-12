@@ -23,13 +23,13 @@ function getViewKeyframe(keyframe){
 }
 
 function parseTime(rawTime){
-	var fullframes = Math.floor(rawTime*FRAMERATE);			
+	var fullframes = Math.floor(rawTime*FRAMERATE);
 	var seconds = Math.floor(fullframes / FRAMERATE);
 	var frames = Math.floor(fullframes % FRAMERATE);
 	return {
-		seconds:seconds, 
-		frames:frames, 
-		fullframes:fullframes, 
+		seconds:seconds,
+		frames:frames,
+		fullframes:fullframes,
 		str: String(seconds)  + ':' + String(frames)
 	}
 }
@@ -43,7 +43,7 @@ var DEFAULTS = {
 }
 
 function clearUnusedParams(keys) {
-		
+
 	var temp = JSON.parse(JSON.stringify(DEFAULTS));
 	var paramNames = Object.keys(DEFAULTS);
 	var unused = [];
@@ -75,7 +75,7 @@ function getFormatedParams(params){
 
 function cjsLayer(layerDef){
 	var str = '\n';
-	
+
 	var layer = _tr2(layerDef);
 	var name = layer.name;
 	var index = layer.index;
@@ -88,18 +88,18 @@ function cjsLayer(layerDef){
 	// for beautyful output
 	var stringParts = [];
 	var maxBaseLength = 0;
-	
+
 	var prevWait = false;
-	
+
 	for(var j=0;j<keys.length;j++) {
 		var ending = (j===keys.length-1) ? '' : '\n';
 		var paramsString = getFormatedParams(clearedParams[j]);
-		
+
 		var keyframe = keys[j].key;
 		var duration = (keyframe-prevKey);
 
 		var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
-		
+
 		var isWait = paramsString === '{}';
 		var viewBase = '';
 		if(isWait){
@@ -116,12 +116,12 @@ function cjsLayer(layerDef){
 			}
 			var valuePartView = `\t.to(${paramsString}, ${duration*2})`;
 			viewBase += valuePartView;
-			
+
 			stringParts.push([viewBase, viewKeyframe]);
 			maxBaseLength = Math.max(valuePartView.length, maxBaseLength);
-			
+
 		}
-		
+
 		prevKey = keyframe;
 	}
 
@@ -138,81 +138,89 @@ function cjs(sceneJSON){
 	var str = '';
 	var layers = sceneJSON.layers;
 	for (var i=0, len = layers.length; i<len; i++){
-		str += cjsLayer(layers[i]); 
+		str += cjsLayer(layers[i]);
 	}
 	str += '\n';
   return str;
 }
 
+function fillPropsUE(keyProps){
+  var frame = {};
+  if(keyProps.hasOwnProperty('x')){
+    frame.x = keyProps.x;
+  }
+  if(keyProps.hasOwnProperty('y')){
+    frame.y = keyProps.y;
+  }
+  if(keyProps.hasOwnProperty('scaleX')){
+    frame.sx = keyProps.scaleX;
+  }
+  if(keyProps.hasOwnProperty('scaleY')){
+    frame.sy = keyProps.scaleY;
+  }
+  if(keyProps.hasOwnProperty('rotation')){
+    var val = (keyProps.rotation / 180) * Math.PI;
+    frame.r = Math.floor((val)*1000) / 1000;
+  }
+  if(keyProps.hasOwnProperty('alpha')){
+    frame.a = keyProps.alpha;
+  }
+  return frame;
+}
 
 //update for UE
 function ue(sceneJSON){
 	let result = {};
 	for(let k in sceneJSON){
 		let item = sceneJSON[k];
-
 		let name = item.name.split(' ').join('_') + '_' + item.index;
 		let innerRes = {'samples' : []};
 		for(let i in item.keys){
-			let frame = {
-				x : item.keys[i].x,
-				y : item.keys[i].y,
-				sx : item.keys[i].scaleX,
-				sy : item.keys[i].scaleY,
-				r : (item.keys[i].rotation / 180) * Math.PI,
-				a : item.keys[i].alpha
-			};
+			let frame = fillPropsUE(item.keys[i]);
 			innerRes.samples.push(frame);
 		}
 		result[name] = innerRes;
 	}
-
 	return JSON.stringify(result, null, '\t');
 }
 
 function getInitPropsParams(initProps, exeptProps){
 	// console.log(initProps)
 	var props = {};
-	
+
 	_.forIn(initProps, function(value, key){
 		// console.log(value)
 		if(exeptProps.indexOf(key) === -1){
 			_.extend(props, value)
 		}
 	})
-	
 	return props;
 }
 
 function parseKeysGroup(group, groupName){
-	
 }
 
 function getKeys(keys){
 	var json = {'keys': []}
-	
+
 	_.forIn(keys, function(keyGroup, key){
-		console.log(key)
-		
 		var prevKeyTime = 0;
 		keyGroup.forEach(function(keyFrame){
 			var keyFrameValue = keyFrame.value;
 			var interp = keyFrame.interpolation;
 			var keyTime = keyFrame.key;
 			var keyTimeStr = keyFrame.keyStr;
-			
+
 			var interpType = '';
 			if(interp){
 				interpType = interp['in'].influence ? ', createjs.Ease.sineOut' : '';
 			}
-			
+
 			// json.keys.push([JSON5.stringify(keyFrameValue, '', ''), keyTime - prevKeyTime])
 			json.keys.push(`to(${JSON5.stringify(keyFrameValue, '', ' ')}, ${keyTime - prevKeyTime}${interpType}) // ${keyTime} ${keyTimeStr}`)
 		})
-		
 		// parseKeysGroup(value, key)
 	})
-	
 	return json;
 }
 
@@ -226,23 +234,23 @@ function getGroupString(group, groupName){
 	var firstLayer = layers[0].layer
 	var name = group.name
 	var index = group.index
-	
+
 	json.regX = firstLayer.initProps.reg.regX;
 	json.regY = firstLayer.initProps.reg.regY;
 	if(firstLayer.blendMode === 'SCREEN' | 'ADD' | 'LIGHTEN'){
 		json.compositeOperation = 'lighter';
 	}
-	
+
 	for (var i=0, len=layers.length; i<len; i++){
 		var layer = layers[i]
 		// console.log(layer);
 		json.positions.push(getInitPropsParams(layer.layer.initProps, ['reg']));
-		
+
 		var keys = layer.layer.keys;
 		var cjsKeys = getKeys(keys)
 		json.keys.push(cjsKeys);
 	}
-	
+
 	return JSON.stringify(json, null, '  ');
 }
 
@@ -250,13 +258,13 @@ function getGroupString(group, groupName){
 function cjsAdv(sceneJSON){
 	var str = ''
 	var layers = sceneJSON.layers
-	
+
 	var groups = {}
 	for (var j=0, len=layers.length; j<len; j++){
 		var layer = layers[j]
 		var name = layer.name
 		var index = layer.index
-		
+
 		if(!groups[name]){
 			groups[name] = {
 				layers:[]
@@ -264,19 +272,18 @@ function cjsAdv(sceneJSON){
 		}
 		groups[name].layers.push({index:index, name:name, layer:layer})
 	}
-	
+
 	// console.log(groups)
-	
+
 	_.forIn(groups, function(value, key){
 		str += getGroupString(groups[key], key)
 	})
-	
+
 	return str;
-	
+
 	for (var i=0, len=layers.length; i<len; i++){
-		
-		
-		
+
+
 		continue;
 		var layer = _tr2(layers[i]);
 		var name = layer.name;
