@@ -32,7 +32,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 	var numLayers = active.numLayers;
 
 	function cropValue(val){
-		return Math.floor((val)*1000) / 1000;
+		return Math.round((val)*1000) / 1000;
 	}
 
 	function getSceneLength(){
@@ -52,6 +52,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 			val = Number(val.toFixed(3));
 		}
 		gkeys[key][propName] = val;
+		gkeys[key]['f'] = "" + key  + ' - ' + Math.floor(key / 30) + ':' + Math.floor(key % 30);
 	}
 
 	function addKey(gkeys, key, propId, propValue){

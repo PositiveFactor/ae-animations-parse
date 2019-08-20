@@ -123,7 +123,7 @@ function parseUE(filename, layerIndex){
   		}
     }
     filename = filename + '-UE.anim';
-  	writeFile(filename, output.ue(toParse));
+  	writeFile(filename, output.ueForEasing(toParse));
 	}
 }
 

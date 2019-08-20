@@ -42,6 +42,7 @@ var DEFAULTS = {
   scaleX:1, scaleY:1,
 }
 
+// for createjs only
 function clearUnusedParams(keys) {
 
 	var temp = JSON.parse(JSON.stringify(DEFAULTS));
@@ -133,12 +134,152 @@ function cjsLayer(layerDef){
   return str;
 }
 
+function getUETweenString (delay, duration, paramName, init, final) {
+	let setterMethod = '';
+	let getterMethod = '';
+
+	let takeInitFromGetter = isNaN(init);
+	switch(paramName){
+		case 'alpha':
+			setterMethod = 'i_setAlpha';
+			getterMethod = 'i_getAlpha()';
+		break;
+		case 'rotation':
+			setterMethod = 'i_setRotation';
+			getterMethod = 'i_getRotation() / 180 * Math.PI';
+			if(!takeInitFromGetter){
+				init = (init / 180) * Math.PI;
+			}
+			final = (final / 180) * Math.PI;
+		break;
+		case 'x':
+			setterMethod = 'i_setX';
+			getterMethod = 'i_getX()';
+		break;
+		case 'y':
+			setterMethod = 'i_setY';
+			getterMethod = 'i_getY()';
+		break;
+		case 'scaleX':
+			setterMethod = 'i_setScaleX';
+			getterMethod = 'i_getScaleX()';
+		break;
+		case 'scaleY':
+			setterMethod = 'i_setScaleY';
+			getterMethod = 'i_getScaleY()';
+		break;
+		default:
+			return `UNSUPPORTED PARAM NAME ${paramName}, input: ${delay}, ${duration}, ${init}, ${final}`;
+	}
+
+	init = takeInitFromGetter ? `l_udo.${getterMethod}` : init;
+
+	if(delay == 0 && duration == 0){
+		return `l_udo.${setterMethod}(${final});`;
+	}
+
+	return `l_ga.i_createNewTween(${delay} / 30, l_udo.${setterMethod}.i_toObjectMethod(this), ${duration} / 30, GAnimation.i_PACS, false, ${init}, ${final});`;
+}
+
+function ueLayer(layerDef){
+	var str = '\n';
+
+	var layer = _tr2(layerDef);
+	var name = layer.name;
+	var index = layer.index;
+	var keys = layer.keys;
+	var prevKey = keys[0].key;
+	var clearedParams = clearUnusedParams(keys);
+
+	str += `${index} ${name}\n\n\nvar l_ga = new GAnimation(this.i_getStage().i_getFrameEnteringTimer());\n`;
+
+	// for beautyful output
+	var stringParts = [];
+	var maxBaseLength = 0;
+
+	var prevWait = false;
+
+	let delay = 0;//in frames, 30 FPS-based
+	let prevValues = {
+	}
+
+	for(var j=0;j<keys.length;j++) {
+		var ending = (j===keys.length-1) ? '' : '\n';
+		var paramsString = getFormatedParams(clearedParams[j]);
+
+		var keyframe = keys[j].key;
+		var duration = (keyframe-prevKey);
+
+		var viewKeyframe = ` // ${prevKey}-${keyframe}\t(${getViewKeyframe(prevKey)}->${getViewKeyframe(keyframe)})`;
+
+		var isWait = paramsString === '{}';
+		var viewBase = '';
+		if(isWait){
+			prevWait = true;
+			// viewBase = `\t.wait(${duration*2})`;
+		}
+		else{
+			if(prevWait){
+				viewBase = '\t // --- // --- \n';
+				prevWait = false;
+			}
+			else{
+				// viewKeyframe = ''
+			}
+
+			let regs = {};
+
+			for(let k in clearedParams[j]){
+				if(k == 'regX' || k == 'regY'){
+					regs[k] = clearedParams[j][k];
+				}else{
+					str += getUETweenString(delay, duration, k, prevValues[k], clearedParams[j][k]) + '\n';
+					prevValues[k] = clearedParams[j][k];
+				}
+			}
+			if(duration == 0 && delay == 0 && !isNaN(regs.regX) && !isNaN(regs.regY)){
+				str += `l_udo.i_setLocalBoundsXY(${regs.regX}, ${regs.regY});\n`;
+			}
+
+			str += '\t// ---- sequence end ----' + '\n';
+			delay += duration;
+
+			var valuePartView = `\t.to(${paramsString}, ${duration*2})`;
+			viewBase += valuePartView;
+
+			stringParts.push([viewBase, viewKeyframe]);
+			maxBaseLength = Math.max(valuePartView.length, maxBaseLength);
+
+		}
+
+		prevKey = keyframe;
+	}
+
+	stringParts = stringParts.map(function(it){
+	  return `${it[0].padEnd(maxBaseLength)}${it[1]}`;
+	});
+	// str += stringParts.join('\n') + '\nreturn l_ga;\n\n\n';
+	str += '\nreturn l_ga;\n\n\n';
+
+  return str;
+}
+
 // output like createjs animation definition.
 function cjs(sceneJSON){
 	var str = '';
 	var layers = sceneJSON.layers;
 	for (var i=0, len = layers.length; i<len; i++){
 		str += cjsLayer(layers[i]);
+	}
+	str += '\n';
+  return str;
+}
+
+function ueForEasing(sceneJSON){
+	var str = '';
+	var layers = sceneJSON.layers;
+	for (var i=0, len = layers.length; i<len; i++){
+		str += ueLayer(layers[i]);
 	}
 	str += '\n';
   return str;
@@ -165,6 +306,9 @@ function fillPropsUE(keyProps){
   if(keyProps.hasOwnProperty('alpha')){
     frame.a = keyProps.alpha;
   }
+  if(keyProps.hasOwnProperty('f')){
+    frame.f = keyProps.f;
+  }
   return frame;
 }
 
@@ -185,19 +329,13 @@ function ue(sceneJSON){
 }
 
 function getInitPropsParams(initProps, exeptProps){
-	// console.log(initProps)
 	var props = {};
-
 	_.forIn(initProps, function(value, key){
-		// console.log(value)
 		if(exeptProps.indexOf(key) === -1){
 			_.extend(props, value)
 		}
 	})
 	return props;
-}
-
-function parseKeysGroup(group, groupName){
 }
 
 function getKeys(keys){
@@ -219,7 +357,6 @@ function getKeys(keys){
 			// json.keys.push([JSON5.stringify(keyFrameValue, '', ''), keyTime - prevKeyTime])
 			json.keys.push(`to(${JSON5.stringify(keyFrameValue, '', ' ')}, ${keyTime - prevKeyTime}${interpType}) // ${keyTime} ${keyTimeStr}`)
 		})
-		// parseKeysGroup(value, key)
 	})
 	return json;
 }
@@ -414,7 +551,9 @@ function coinsTrail2(){
 
 module.exports.cjs = cjs;
 module.exports.ue = ue;
+module.exports.ueForEasing = ueForEasing;
 module.exports.cjsLayer = cjsLayer;
+module.exports.ueLayer = ueLayer;
 module.exports.cjsAdv = cjsAdv;
 module.exports.coinsTrail = coinsTrail;
 module.exports.coinsTrail2 = coinsTrail2;
