@@ -28,6 +28,8 @@ const aeParseAdvance = require('./ae/aeParseAdvance');
 const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
 const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
 const aeParseFramedLayer = require('./ae/aeParseFramedLayer');
+const aeGetKeysForLayer = require('./ae/aeGetKeysForLayer');
+const convertToBezier = require('./ae/convertToBezier');
 //  ...
 
 const baseFolder = 'parsed';
@@ -66,6 +68,11 @@ function getOptions(){
 	{
 		options.framerate = program.framerate;
 	}
+
+  if(program.framed)
+	{
+		options.framed = program.framed;
+	}
   return options;
 }
 
@@ -86,6 +93,38 @@ function parse(filename){
 
 	filename = filename + '.anim';
 	writeFile(filename, output.cjs(aeJSON));
+}
+
+function exp(layerIndex){
+
+  var aeCommand = new ae.Command(convertToBezier);
+
+  var res = ae.executeSync(aeCommand);
+  console.log('res', res);
+}
+
+function serial(layerIndex){
+  if(layerIndex === undefined){
+    console.log('param layerIndex is needed');
+    return;
+  }
+
+  var options = getOptions();
+
+  console.log('options', options);
+
+  var aeCommand = new ae.Command(aeGetKeysForLayer);
+
+  var aeJSON = ae.executeSync(aeGetLayersTransform);
+
+  if(!(aeJSON && aeJSON.layers && aeJSON.layers.length)){
+    return;
+  }
+  var layerName = aeJSON.layers[layerIndex].name;
+
+  var res = ae.executeSync(aeCommand, layerIndex, false, options);
+  var res = output.serial(res);
+  console.log('output', res);
 }
 
 function parseUE(filename, layerIndex){
@@ -115,15 +154,21 @@ function parseUE(filename, layerIndex){
     var filename = filename || 'default';
     var filenameJSON = filename + '.json';
     writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
+
     if(aeJSON && aeJSON.layers && aeJSON.layers.length){
-  		for (let i = 0; i < aeJSON.layers.length; i++) {
-  			let layerIndex = aeJSON.layers[i].index;
+      var layersArr = aeJSON.layers;
+      var layersNum =  layersArr.length;
+      console.log('layersNum', layersNum);
+  		for (let i = 0; i < layersNum; i++) {
+  			let layerIndex = layersArr[i].index;
+        console.log('layerIndex', layerIndex);
   			var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
   			toParse[layerIndex] = res;
   		}
     }
-    filename = filename + '-UE.anim';
-  	writeFile(filename, output.ueForEasing(toParse));
+
+    writeFile(filename + '-UE.json', JSON.stringify(toParse, '  ', '  '));
+  	writeFile(filename + '-UE.anim', output.ueForEasing(toParse));
 	}
 }
 
@@ -173,8 +218,9 @@ program
   .version('0.0.1')
   .option('-s, --scale-mult [value]', 'scale mult')
   .option('-r, --relative-positions', 'relative positions')
-  .option('-r, --framerate', 'framerate')
-  .option('-r, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
+  .option('--framerate', 'framerate')
+  .option('-p, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
+  .option('-f, --framed', 'output frames instead keys info')
 
 program
   .command('parse [filename]')
@@ -184,9 +230,21 @@ program
 
 program
   .command('parseue [filename] [layerIndex]')
-  .alias('p')
+  .alias('pue')
   .description('parseUE opened ae file to ".anim" file.')
   .action(parseUE)
+
+program
+  .command('exp')
+  .alias('e')
+  .description('nothing to see')
+  .action(exp)
+
+program
+  .command('serial [layerIndex]')
+  .alias('s')
+  .description('print serial format anim')
+  .action(serial)
 
 program
   .command('pp [layerIndex] [isFramed]')

@@ -1,4 +1,4 @@
-function aeGetLayersTransform(layerIndex, isFramed, options) {
+function aeGetKeysForLayer(layerIndex, isFramed, options) {
 
 	var scaleMult = 1;
 	if(options && options.scaleMult){
@@ -16,20 +16,21 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 	}
 
 	var FRAMERATE = framerate;
+
 	var TRANSFORM_USEFULL = [1, 2, 6, 10, 11];
+
 	var TRANSFORM_PROPERTY_NAMES = {
-		"1": {name:["regX", "regY"], mult:positionCoefficient}, 		// 1
-		"2": {name:["x", "y"], mult:positionCoefficient},			// 2
-		"6": {name:["scaleX", "scaleY"], mult:0.01*scaleMult}, 	// 6
-		"10": {name:"rotation"}, 			// 10
-		"11": {name:"alpha", mult:0.01},				// 11
+		"1": {alias: 'reg', name:["regX", "regY"], mult:positionCoefficient}, 	// 1
+		"2": {alias: 'position', name:["x", "y"], mult:positionCoefficient},					// 2
+		"6": {alias: 'scale', name:["scaleX", "scaleY"], mult:0.01*scaleMult}, 		// 6
+		"10": {alias: 'rotation', name:"rotation"}, 																	// 10
+		"11": {alias: 'alpha', name:"alpha", mult:0.01},													// 11
 	};
 
-	var globalKeys = {};
-	var json = {layers:[]};
-	var active = app.project.activeItem;
-	var layers = active.layers;
-	var numLayers = active.numLayers;
+	var INTERPOLATIONS = {};
+	INTERPOLATIONS[KeyframeInterpolationType.LINEAR] = "LINEAR";
+	INTERPOLATIONS[KeyframeInterpolationType.BEZIER] = "BEZIER";
+	INTERPOLATIONS[KeyframeInterpolationType.HOLD] = "HOLD";
 
 	function cropValue(val){
 		return Math.round((val)*1000) / 1000;
@@ -47,31 +48,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		return Number(n) === n && n % 1 !== 0;
 	}
 
-	function _saveKeyframe(gkeys, key, propName, val){
-		if(!isInt(val)){
-			val = Number(val.toFixed(3));
-		}
-		gkeys[key][propName] = val;
-		gkeys[key]['f'] = "" + key  + ' - ' + Math.floor(key / 30) + ':' + Math.floor(key % 30);
-	}
 
-	function addKey(gkeys, key, propId, propValue){
-		key = Math.round(key * FRAMERATE);
-		if(!gkeys.hasOwnProperty(key)){
-			gkeys[key] = {};
-		}
-
-		var propertyDefinition = TRANSFORM_PROPERTY_NAMES[propId];
-		var mult = propertyDefinition.mult || 1;
-		var isDifferentProp = propertyDefinition.name instanceof Array;
-		var propertyNames = isDifferentProp ? propertyDefinition.name : [propertyDefinition.name];
-
-		for (var f=0;f<propertyNames.length;f++){
-			var propName = propertyNames[f];
-			var val = cropValue(propValue[f]*mult);
-			_saveKeyframe(gkeys, key, propName, val);
-		}
-	};
 
 	function getAllFrames(transform, inPointFrame, outPointFrame){
 		var keys = {};
@@ -85,41 +62,68 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		return Object.keys(keys).sort();
 	}
 
-
 	function getAllKeysForTransform(transform){
-		var keys = {'0':true};
-		var sceneLen = getSceneLength();
-		keys[sceneLen] = true;
-		for (var b=0;b<TRANSFORM_USEFULL.length;b++){
+		var keys = {};
+
+		for (var b=0; b < TRANSFORM_USEFULL.length; b++){
 			var propId = TRANSFORM_USEFULL[b];
 			var prop = transform.property(propId);
+			var propertyDefinition = TRANSFORM_PROPERTY_NAMES[propId];
 
 			if(prop.numKeys){
-				for (var j=1; j<=prop.numKeys;j++){
-					var key = prop.keyTime(j);
-					if(!keys.hasOwnProperty(key)){
-						keys[key] = true;
+				var propSerial = [];
+				var alias = propertyDefinition['alias'];
+				keys[alias] = propSerial;
+
+				// all keyframes for current prop;
+				for (var keyframeIndex=1; keyframeIndex<=prop.numKeys; keyframeIndex++){
+					var key = Math.round(prop.keyTime(keyframeIndex) * FRAMERATE);
+					var keyFrameDef = {
+						key: key,
+						aeKey: Math.floor(key / FRAMERATE) + ':' + Math.floor(key % FRAMERATE),
+						interp: INTERPOLATIONS[prop.keyInInterpolationType(keyframeIndex)]
 					}
+
+					var propValue = prop.keyValue(keyframeIndex);
+					var mult = propertyDefinition.mult || 1;
+					var isDifferentProp = propertyDefinition.name instanceof Array;
+					var propertyNames = isDifferentProp ? propertyDefinition.name : [propertyDefinition.name];
+
+					var identic = true;
+					for (var f=0;f<propertyNames.length;f++){
+						var propName = propertyNames[f];
+						var val = cropValue(propValue[f]*mult);
+						keyFrameDef[propName] = val;
+					}
+
+					propSerial.push(keyFrameDef);
 				}
 			}
 		}
-		return Object.keys(keys).sort();
+
+		return keys;
 	}
 
 	function getLayerDef(layer){
-		console.log(layer);
 		var jsonLayer = {
 			name:layer.name,
 			index: layer.index,
+			tweens: {},
 			keys:{},
 		};
+
 		var effects = layer['Effects'];
-		var transform = layer['Transform'];
 		jsonLayer.effectsExist = !!effects;
 
-		var allKeys = getAllKeysForTransform(transform);
+		var transform = layer['Transform'];
 
-		var prevKey = null;
+
+		var allKeys = getAllKeysForTransform(transform);
+		// console.log('allKeys ', allKeys);
+		jsonLayer.tweens = allKeys;
+		return jsonLayer;
+
+		/*var prevKey = null;
 		for (var r=0;r<allKeys.length;r++){
 			var key = allKeys[r];
 			jsonLayer.keys[Math.round(key * FRAMERATE)] = {};
@@ -160,7 +164,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		jsonLayer.keys = keysArr;
 		jsonLayer.oldKeys = oldKeys;
 
-		return jsonLayer;
+		return jsonLayer;*/
 	}
 
 	function getLayerDefFramed(layer){
@@ -231,7 +235,14 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		return jsonLayer;
 	}
 
-	var layer = layers[layerIndex];
+	var globalKeys = {};
+	var json = {layers:[]};
+	var aeActive = app.project.activeItem;
+	var aeLayers = aeActive.layers;
+	var aeNumLayers = aeActive.numLayers;
+
+	var layer = aeLayers[layerIndex];
+
 	var jsonLayer = isFramed
 		? getLayerDefFramed(layer)
 		: getLayerDef(layer);
@@ -240,4 +251,4 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 }
 
 
-module.exports = aeGetLayersTransform;
+module.exports = aeGetKeysForLayer;

@@ -276,8 +276,11 @@ function cjs(sceneJSON){
 }
 
 function ueForEasing(sceneJSON){
+  // console.log('sceneJSON', sceneJSON);
+  var keys = Object.keys(sceneJSON);
+  console.log('keys', keys)
 	var str = '';
-	var layers = sceneJSON.layers;
+	var layers = sceneJSON;
 	for (var i=0, len = layers.length; i<len; i++){
 		str += ueLayer(layers[i]);
 	}
@@ -306,9 +309,9 @@ function fillPropsUE(keyProps){
   if(keyProps.hasOwnProperty('alpha')){
     frame.a = keyProps.alpha;
   }
-  if(keyProps.hasOwnProperty('f')){
+  /*if(keyProps.hasOwnProperty('f')){
     frame.f = keyProps.f;
-  }
+  }*/
   return frame;
 }
 
@@ -389,6 +392,20 @@ function getGroupString(group, groupName){
 	}
 
 	return JSON.stringify(json, null, '  ');
+}
+
+function serial(aeObj){
+  var tweens = aeObj.tweens;
+  var props = Object.keys(tweens);
+
+  /*props.forEach(function(propName){
+    var prop = props[propName];
+    var keyFrame = parseTime(prop.key);
+    var value = prop[prop.value];
+  })*/
+
+
+  return JSON.stringify(aeObj, '  ', '  ');
 }
 
 // output like createjs animation definition.
@@ -554,6 +571,7 @@ module.exports.ue = ue;
 module.exports.ueForEasing = ueForEasing;
 module.exports.cjsLayer = cjsLayer;
 module.exports.ueLayer = ueLayer;
+module.exports.serial = serial;
 module.exports.cjsAdv = cjsAdv;
 module.exports.coinsTrail = coinsTrail;
 module.exports.coinsTrail2 = coinsTrail2;
