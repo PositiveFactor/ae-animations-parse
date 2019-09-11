@@ -52,7 +52,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 			val = Number(val.toFixed(3));
 		}
 		gkeys[key][propName] = val;
-		gkeys[key]['f'] = "" + key  + ' - ' + Math.floor(key / 30) + ':' + Math.floor(key % 30);
+		// gkeys[key]['f'] = "" + key  + ' - ' + Math.floor(key / 30) + ':' + Math.floor(key % 30);
 	}
 
 	function addKey(gkeys, key, propId, propValue){
@@ -65,6 +65,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		var mult = propertyDefinition.mult || 1;
 		var isDifferentProp = propertyDefinition.name instanceof Array;
 		var propertyNames = isDifferentProp ? propertyDefinition.name : [propertyDefinition.name];
+		propValue = isDifferentProp ? propValue : [propValue];
 
 		for (var f=0;f<propertyNames.length;f++){
 			var propName = propertyNames[f];
@@ -73,7 +74,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		}
 	};
 
-	function getAllFrames(transform, inPointFrame, outPointFrame){
+	function getAllFrames(transform, inPointFrame, outPointFrame, onlyKeyframes){
 		var keys = {};
 		var sceneLen = getSceneLength() * FRAMERATE;
 		inPointFrame = inPointFrame ? inPointFrame : 0;
@@ -104,6 +105,40 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 			}
 		}
 		return Object.keys(keys).sort();
+	}
+
+	function getFirstLastKeyframeRange(transform){
+
+		var minKeyFrame = null;
+		var maxKeyFrame = null;
+
+		for (var b=0;b<TRANSFORM_USEFULL.length;b++){
+			var propId = TRANSFORM_USEFULL[b];
+			var prop = transform.property(propId);
+
+			if(prop.numKeys){
+				for (var j=1; j<=prop.numKeys;j++){
+					var key = prop.keyTime(j);
+
+					if(minKeyFrame === null || key < minKeyFrame){
+						minKeyFrame = key;
+					}
+
+					if(maxKeyFrame === null || key > maxKeyFrame){
+						maxKeyFrame = key;
+					}
+
+				}
+			}
+		}
+		var oneFrameTime = 1/FRAMERATE;
+
+		return {
+			min:minKeyFrame,
+			minFrame:Math.round(minKeyFrame * FRAMERATE),
+			max:maxKeyFrame,
+			maxFrame:Math.round(maxKeyFrame * FRAMERATE)
+		};
 	}
 
 	function getLayerDef(layer){
@@ -182,8 +217,15 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		console.log(r, ' layer.inPoint ', layer.inPoint/oneFrameTime);
 		console.log(r, ' layer.outPoint ', layer.outPoint/oneFrameTime);
 
+		var range = getFirstLastKeyframeRange(transform);
+		console.log(range.min, ':', range.max, ' ', range.minFrame, ':', range.maxFrame);
+
+		var startPointFrame = range.minFrame || inPointFrame;
+		var endPointFrame = range.maxFrame || outPointFrame;
+
 		// var allKeys = getAllKeysForTransform(transform);
-		var allKeys = getAllFrames(transform, inPointFrame, outPointFrame);
+		var allKeys = getAllFrames(transform, startPointFrame, endPointFrame);
+
 
 		var prevKey = null;
 		for (var r=0; r<allKeys.length; r++) {
@@ -193,6 +235,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 			for (var d=0; d<TRANSFORM_USEFULL.length; d++){
 				var propId = TRANSFORM_USEFULL[d];
 				var prop = transform.property(propId);
+				// console.log('prop.name ' + prop.name);
 				// console.log('prop.expression', prop.expression);
 				if(prop.numKeys || prop.expression){
 					var val = prop.valueAtTime(key, true);
@@ -201,6 +244,9 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 					}
 
 					addKey(jsonLayer.keys, key, propId, val);
+				}
+				else{
+					// console.log('exp');
 				}
 			};
 			prevKey = key;
