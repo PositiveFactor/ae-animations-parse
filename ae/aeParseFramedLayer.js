@@ -15,6 +15,11 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		framerate = options.framerate;
 	}
 
+	var params = [];
+	if(options && options.props){
+		params = options.props;
+	}
+
 	var FRAMERATE = framerate;
 	var TRANSFORM_USEFULL = [1, 2, 6, 10, 11];
 	var TRANSFORM_PROPERTY_NAMES = {
@@ -134,9 +139,9 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		var oneFrameTime = 1/FRAMERATE;
 
 		return {
-			min:minKeyFrame,
+			minTime:minKeyFrame,
 			minFrame:Math.round(minKeyFrame * FRAMERATE),
-			max:maxKeyFrame,
+			maxTime:maxKeyFrame,
 			maxFrame:Math.round(maxKeyFrame * FRAMERATE)
 		};
 	}
@@ -198,8 +203,7 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		return jsonLayer;
 	}
 
-	function getLayerDefFramed(layer){
-		console.log(layer);
+	function getLayerDefFramed(layer, options){
 		var jsonLayer = {
 			name:layer.name,
 			index: layer.index,
@@ -214,14 +218,19 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 		var inPointFrame =  layer.inPoint/oneFrameTime;
 		var outPointFrame =  layer.outPoint/oneFrameTime;
 
-		console.log(r, ' layer.inPoint ', layer.inPoint/oneFrameTime);
-		console.log(r, ' layer.outPoint ', layer.outPoint/oneFrameTime);
+		console.log('layer.inPoint  : ', layer.inPoint/oneFrameTime);
+		console.log('layer.outPoint : ', layer.outPoint/oneFrameTime);
 
 		var range = getFirstLastKeyframeRange(transform);
-		console.log(range.min, ':', range.max, ' ', range.minFrame, ':', range.maxFrame);
 
-		var startPointFrame = range.minFrame || inPointFrame;
-		var endPointFrame = range.maxFrame || outPointFrame;
+		console.log('range.minFrame : ', range.minFrame, ' (time ', range.minTime, ')');
+		console.log('range.maxFrame : ', range.maxFrame, ' (time ', range.maxTime, ')');
+
+		var startPointFrame = Math.max(range.minFrame, inPointFrame);
+		var endPointFrame = Math.min(range.maxFrame, outPointFrame);
+
+		console.log('total startPointFrame : ', startPointFrame);
+		console.log('total endPointFrame   : ', endPointFrame);
 
 		// var allKeys = getAllKeysForTransform(transform);
 		var allKeys = getAllFrames(transform, startPointFrame, endPointFrame);
@@ -279,8 +288,8 @@ function aeGetLayersTransform(layerIndex, isFramed, options) {
 
 	var layer = layers[layerIndex];
 	var jsonLayer = isFramed
-		? getLayerDefFramed(layer)
-		: getLayerDef(layer);
+		? getLayerDefFramed(layer, options)
+		: getLayerDef(layer, options);
 
 	return jsonLayer;
 }

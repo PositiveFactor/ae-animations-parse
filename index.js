@@ -72,6 +72,16 @@ function getOptions(){
   if(program.framed) {
 		options.framed = program.framed;
 	}
+
+  if(program.props) {
+		options.props = program.props.split(',').map(function(item){
+      return item.trim();
+    });
+	}
+  else{
+    options.props = [];
+  }
+
   return options;
 }
 
@@ -104,7 +114,8 @@ function serial(layerIndex){
 
   var layerName = aeLayers[layerIndex-1].name;
   var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
-  var resJSON = output.serial(res);
+  console.log(res);
+  var resJSON = output.serial(res, options.props);
   console.log(resJSON);
 
   /*filename = filename || layerName || 'default';
@@ -152,12 +163,13 @@ function parse2(filename){
 }
 
 program
-  .version('0.0.1')
+  .version('0.0.2')
   .option('-s, --scale-mult [value]', 'scale mult')
   .option('-r, --relative-positions', 'relative positions')
   .option('--framerate', 'framerate')
   .option('-p, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
   .option('-f, --framed', 'output frames instead keys info')
+  .option('--props [value]', 'output only chosen props. Props separate by comma.')
 
 
 program
@@ -169,7 +181,7 @@ program
 program
   .command('exp')
   .alias('e')
-  .description('nothing to see')
+  .description('nothing to see here, simple api for experimental staff')
   .action(exp)
 
 program

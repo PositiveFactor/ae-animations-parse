@@ -191,30 +191,22 @@ function ueForEasing(sceneJSON){
   return str;
 }
 
-function fillPropsUE(keyProps){
+function fillPropsUE(keyProps, filter){
   var frame = {};
-  if(keyProps.hasOwnProperty('x')){
-    frame.x = keyProps.x;
+
+  var testFunction = function(prop){
+    return keyProps.hasOwnProperty(prop) && (filter.length === 0 || filter.indexOf(prop) >= 0);
   }
-  if(keyProps.hasOwnProperty('y')){
-    frame.y = keyProps.y;
-  }
-  if(keyProps.hasOwnProperty('scaleX')){
-    frame.sx = keyProps.scaleX;
-  }
-  if(keyProps.hasOwnProperty('scaleY')){
-    frame.sy = keyProps.scaleY;
-  }
-  if(keyProps.hasOwnProperty('rotation')){
+
+  if(testFunction('x')) { frame.x = keyProps.x; }
+  if(testFunction('y')) { frame.y = keyProps.y; }
+  if(testFunction('scaleX')) { frame.sx = keyProps.scaleX; }
+  if(testFunction('scaleY')) { frame.sy = keyProps.scaleY; }
+  if(testFunction('alpha')) { frame.a = keyProps.alpha; }
+  if(testFunction('rotation')) {
     var val = (keyProps.rotation / 180) * Math.PI;
     frame.r = Math.floor((val)*1000) / 1000;
   }
-  if(keyProps.hasOwnProperty('alpha')){
-    frame.a = keyProps.alpha;
-  }
-  /*if(keyProps.hasOwnProperty('f')){
-    frame.f = keyProps.f;
-  }*/
   return frame;
 }
 
@@ -244,10 +236,10 @@ function ue(sceneJSON){
 	return JSON.stringify(result, null, '\t');
 }
 
-function serial(layerObj){
+function serial(layerObj, filter){
   var resArr = [];
   for(let i in layerObj.keys){
-    let frame = fillPropsUE(layerObj.keys[i]);
+    let frame = fillPropsUE(layerObj.keys[i], filter);
     resArr.push(frame);
   }
 
