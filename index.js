@@ -1,6 +1,6 @@
 'use strict';
 
-const output = require('./outputMethods');
+const output = require('./outputMethods/outputMethods');
 require('./polyfills');
 
 // ae middleware ...
@@ -13,16 +13,19 @@ ae.options.includes = [
   './node_modules/after-effects/lib/includes/get.jsx',
   // './includes/standard.jsx'
 ];
-ae.options.program = path.join('c:/Program Files/Adobe','Adobe After Effects CC 2019');
+ae.options.program = path.join('C:/Program Files/Adobe','Adobe After Effects CC 2019');
 ae.options.errorHandling = true;
 // ...
 
 // cli interface dependencies ...
 const program = require('commander');
 const Promise = require('promise');
+const cliCoins = require('./cli/cliCoins');
+const cliCreatejs = require('./cli/cliCreatejs');
 // ...
 
 // user ae scripts ...
+const aeGetLayers = require('./ae/aeGetLayers');
 const aeGetLayersTransform = require('./ae/aeGetLayersTransform');
 const aeParseAdvance = require('./ae/aeParseAdvance');
 const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
@@ -54,45 +57,22 @@ function getLen(){
 
 function getOptions(){
   var options = {};
-	if(program.scaleMult)
-	{
+	if(program.scaleMult) {
 		options.scaleMult = program.scaleMult;
 	}
 
-  if(program.positionKoefficient)
-	{
+  if(program.positionKoefficient) {
 		options.positionKoefficient = program.positionKoefficient;
 	}
 
-  if(program.framerate)
-	{
+  if(program.framerate) {
 		options.framerate = program.framerate;
 	}
 
-  if(program.framed)
-	{
+  if(program.framed) {
 		options.framed = program.framed;
 	}
   return options;
-}
-
-function pp(layerIndex, isFramed){
-  var options = getOptions();
-
-	var mycommand = new ae.Command(aeParseFramedLayer);
-	var res = ae.executeSync(mycommand, layerIndex, isFramed === 'true', options);
-	console.log(output.cjsLayer(res));
-}
-
-function parse(filename){
-	var aeJSON = ae.executeSync(aeGetLayersTransform);
-
-	var filename = filename || 'default';
-	var filenameJSON = filename + '.json';
-	writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
-
-	filename = filename + '.anim';
-	writeFile(filename, output.cjs(aeJSON));
 }
 
 function exp(layerIndex){
@@ -109,63 +89,51 @@ function serial(layerIndex){
     return;
   }
 
+  console.log('layerIndex', layerIndex);
+
   var options = getOptions();
+  var aeLayers = ae.executeSync(aeGetLayers);
+  var parseFramedLayerCommand = new ae.Command(aeParseFramedLayer);
 
-  console.log('options', options);
-
-  var aeCommand = new ae.Command(aeGetKeysForLayer);
-
-  var aeJSON = ae.executeSync(aeGetLayersTransform);
-
-  if(!(aeJSON && aeJSON.layers && aeJSON.layers.length)){
+  if(layerIndex > aeLayers.length || layerIndex <= 0)
+  {
+    console.log('param layerIndex is wrong. Note: layerindex starts with "1"');
+    console.log('layers num: ' + aeLayers.length);
     return;
   }
-  var layerName = aeJSON.layers[layerIndex].name;
 
-  var res = ae.executeSync(aeCommand, layerIndex, false, options);
-  var res = output.serial(res);
-  console.log('output', res);
+  var layerName = aeLayers[layerIndex-1].name;
+  var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
+  var resJSON = output.serial(res);
+  console.log(resJSON);
+
+  /*filename = filename || layerName || 'default';
+  var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
+  toParse[layerIndex] = res;
+	writeFile(filename + '.json', output.ue(toParse));*/
 }
 
 function parseUE(filename, layerIndex){
-	let toParse = {};
+	var toParse = {};
   var options = getOptions();
 
   var parseFramedLayerCommand = new ae.Command(aeParseFramedLayer);
   var aeJSON = ae.executeSync(aeGetLayersTransform);
 
-  console.log('filename, layerIndex', filename, layerIndex)
+  var filename = filename || 'default';
+  var filenameJSON = filename + '.json';
+  writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
 
-  if(layerIndex !== undefined){
-    if(aeJSON && aeJSON.layers && aeJSON.layers.length){
-      var layerName = aeJSON.layers[layerIndex].name;
-    }
-    else{
-      return;
-    }
-
-    filename = filename || layerName || 'default';
-
-    var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
-    toParse[layerIndex] = res;
-  	writeFile(filename + '.json', output.ue(toParse));
-  }
-	else {
-    var filename = filename || 'default';
-    var filenameJSON = filename + '.json';
-    writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
-
-    if(aeJSON && aeJSON.layers && aeJSON.layers.length){
-      var layersArr = aeJSON.layers;
-      var layersNum =  layersArr.length;
-      console.log('layersNum', layersNum);
-  		for (let i = 0; i < layersNum; i++) {
-  			let layerIndex = layersArr[i].index;
-        console.log('layerIndex', layerIndex);
-  			var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
-  			toParse[layerIndex] = res;
-  		}
-    }
+  if(aeJSON && aeJSON.layers && aeJSON.layers.length){
+    var layersArr = aeJSON.layers;
+    var layersNum =  layersArr.length;
+    console.log('layersNum', layersNum);
+		for (var i = 0; i < layersNum; i++) {
+			let layerIndex = layersArr[i].index;
+      console.log('layerIndex', layerIndex);
+			var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
+			toParse[layerIndex] = res;
+		}
 
     writeFile(filename + '-UE.json', JSON.stringify(toParse, '  ', '  '));
   	writeFile(filename + '-UE.anim', output.ueForEasing(toParse));
@@ -183,37 +151,6 @@ function parse2(filename){
 	// writeFile(filename, output.cjs(aeJSON));
 }
 
-function getMultDef(filename){
-	var file = fs.readFileSync(path.join('parsed', filename + '.json'));
-
-	var json = JSON.parse(file);
-
-	filename = filename + '.anim';
-	writeFile(filename, output.cjsAdv(json));
-}
-
-function parseFallingCoins(){
-	var json = ae(aeGetFallingCoinsDef);
-	var str = '';
-	for (var i=0;i<json.length;i++){
-		str += JSON.stringify(json[i]);
-		str += ',\n';
-	}
-
-	var filename = 'falling_coins.anim';
-    var data = str;
-	writeFile(filename, data);
-}
-
-function parseCoins(filename){
-	var aeJSON = ae(aeGetCoinsDef);
-  var fnameJSON = `coins_def/${filename}.json`;
-  var fname = `coins_def/${filename}.anim`;
-
-  writeFile(fnameJSON, JSON.stringify(aeJSON, null, '  '));
-	writeFile(fname, output.coinsTrail(aeJSON));
-}
-
 program
   .version('0.0.1')
   .option('-s, --scale-mult [value]', 'scale mult')
@@ -222,11 +159,6 @@ program
   .option('-p, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
   .option('-f, --framed', 'output frames instead keys info')
 
-program
-  .command('parse [filename]')
-  .alias('p')
-  .description('parse opened ae file to ".anim" file.')
-  .action(parse)
 
 program
   .command('parseue [filename] [layerIndex]')
@@ -247,37 +179,17 @@ program
   .action(serial)
 
 program
-  .command('pp [layerIndex] [isFramed]')
-  .description('parse opened ae file to ".anim" file.')
-  .action(pp)
-
-program
   .command('parse2 [filename]')
   .alias('p')
   .description('parse opened ae file to ".anim" file. EXPERIMENTAL')
   .action(parse2)
 
 program
-  .command('mult [filename]')
-  .alias('p')
-  .description('create ".anim" file from ".json". EXPERIMENTAL')
-  .action(getMultDef)
-
-program
   .command('len')
   .description('get scene len in seconds.')
   .action(getLen)
 
-program
-  .command('coins [filename]')
-  .alias('c')
-  .description('parse coins bezier paths.')
-  .action(parseCoins)
-
-program
-  .command('fallingcoin')
-  .alias('fc')
-  .description('parse falling coins.')
-  .action(parseFallingCoins)
+cliCoins.initCli(program);
+cliCreatejs.initCli(program);
 
 program.parse(process.argv);

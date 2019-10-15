@@ -1,3 +1,5 @@
+// NOTE: скрипт спотыкается об слои без трансформа, с названиями анимаций например
+
 function aeGetLayersTransform() {
 	var KOEF = 1;//1780/1920;
 	var FRAMERATE = 30;
@@ -88,6 +90,7 @@ function aeGetLayersTransform() {
 		};
 		var effects = layer['Effects'];
 		var transform = layer['Transform'];
+
 		var allKeys = getAllKeysForTransform(transform);
 
 		jsonLayer.effectsExist = !!effects;
