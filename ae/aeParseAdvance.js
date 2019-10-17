@@ -1,5 +1,5 @@
-function aeGetLayersTransform() {	
-	
+function aeGetLayersTransform() {
+
 	var BLENDS = {
 		"5220":"ADD",
 		"5244":"ALPHA_ADD",
@@ -40,66 +40,66 @@ function aeGetLayersTransform() {
 		"5248":"SUBTRACT",
 		"5230":"VIVID_LIGHT"
 	}
-	
+
 	var LAYER_KEYS = [
-		"==", 
-		"active", "activeAtTime", 
-		"addProperty", "addToMotionGraphicsTemplate", 
+		"==",
+		"active", "activeAtTime",
+		"addProperty", "addToMotionGraphicsTemplate",
 		"canAddProperty", "canAddToMotionGraphicsTemplate", "canSetCollapseTransformation", "canSetEnabled", "canSetTimeRemapEnabled",
-		"adjustmentLayer", "applyPreset", 
-		"audioActive", "audioActiveAtTime", "audioEnabled", "hasAudio", 
-		"autoOrient", 
-		"blendingMode", 
-		"calculateTransformFromPoints", 
-		"collapseTransformation", 
-		"comment", 
-		"compPointToSource", 
-		"containingComp", 
-		"copyToComp", 
-		"duplicate", 
-		"effectsActive", 
-		"elided", 
-		"enabled", 
-		"environmentLayer", 
-		"frameBlending", 
-		"frameBlendingType", 
-		"getRenderGUID", 
-		"guideLayer", 
+		"adjustmentLayer", "applyPreset",
+		"audioActive", "audioActiveAtTime", "audioEnabled", "hasAudio",
+		"autoOrient",
+		"blendingMode",
+		"calculateTransformFromPoints",
+		"collapseTransformation",
+		"comment",
+		"compPointToSource",
+		"containingComp",
+		"copyToComp",
+		"duplicate",
+		"effectsActive",
+		"elided",
+		"enabled",
+		"environmentLayer",
+		"frameBlending",
+		"frameBlendingType",
+		"getRenderGUID",
+		"guideLayer",
 		"hasTrackMatte", "trackMatteType",
-		"hasVideo", 
-		"height", "width", 
-		"inPoint", 
-		"index", 
-		"isEffect", "isMask", "isModified", "isNameFromSource", "isNameSet", "isTrackMatte", 
-		"label", 
-		"lightType", 
-		"locked", 
-		"matchName", "motionBlur", 
-		"moveAfter", "moveBefore", "moveTo", "moveToBeginning", "moveToEnd", 
-		"name", 
-		"nullLayer", 
-		"numProperties", 
-		"openInViewer", 
-		"outPoint", 
-		"parent", 
-		"parentProperty", 
-		"preserveTransparency", 
-		"property", "propertyDepth", "propertyGroup", "propertyType", 
-		"quality", "remove", "replaceSource", "samplingQuality", 
-		"selected", "selectedProperties", "setParentWithJump", "shy", "solo", 
-		"source", "sourcePointToComp", "sourceRectAtTime", 
-		"startTime", "stretch", 
-		"threeDLayer", "threeDPerChar", 
-		"time", "timeRemapEnabled",  
+		"hasVideo",
+		"height", "width",
+		"inPoint",
+		"index",
+		"isEffect", "isMask", "isModified", "isNameFromSource", "isNameSet", "isTrackMatte",
+		"label",
+		"lightType",
+		"locked",
+		"matchName", "motionBlur",
+		"moveAfter", "moveBefore", "moveTo", "moveToBeginning", "moveToEnd",
+		"name",
+		"nullLayer",
+		"numProperties",
+		"openInViewer",
+		"outPoint",
+		"parent",
+		"parentProperty",
+		"preserveTransparency",
+		"property", "propertyDepth", "propertyGroup", "propertyType",
+		"quality", "remove", "replaceSource", "samplingQuality",
+		"selected", "selectedProperties", "setParentWithJump", "shy", "solo",
+		"source", "sourcePointToComp", "sourceRectAtTime",
+		"startTime", "stretch",
+		"threeDLayer", "threeDPerChar",
+		"time", "timeRemapEnabled",
 		"Effects", "Transform" // groups
 	];
-	
-	
+
+
 	var INTERPOLATIONS = {};
 		INTERPOLATIONS[KeyframeInterpolationType.LINEAR] = "LINEAR";
 		INTERPOLATIONS[KeyframeInterpolationType.BEZIER] = "BEZIER";
 		INTERPOLATIONS[KeyframeInterpolationType.HOLD] = "HOLD";
-		
+
 	var KOEF = 1//;1780/1920;
 	var FRAMERATE = 30;
 	var TRANSFORM_USEFULL_KEYS = [1,2,6,10,11];
@@ -110,7 +110,7 @@ function aeGetLayersTransform() {
 		"10": {alias:'rotation', name:"rotation"}, 			// 10
 		"11": {alias:'alpha', name:"alpha", mult:0.01},				// 11
 	};
-	
+
 	var json = {layers:[]};
 	var activeItem = app.project.activeItem;
 	var layers = activeItem.layers;
@@ -123,10 +123,10 @@ function aeGetLayersTransform() {
 	function isFloat(n){
 		return Number(n) === n && n % 1 !== 0;
 	}
-	
+
 	function cropValue(val){
 		return Math.floor((val)*100) / 100;
-	}	
+	}
 
 	function getAllKeysForTransform(transform){
 		var keys = {'0':true};
@@ -147,11 +147,11 @@ function aeGetLayersTransform() {
 		}
 		return Object.keys(keys).sort();
 	}
-	
+
 	function getKeysForProp(transform, propId){
 		// var sceneLen = activeItem.workAreaDuration;
 		var prop = transform.property(propId);
-		
+
 		var propId = TRANSFORM_USEFULL_KEYS[b];
 		var prop = transform.property(propId);
 
@@ -163,25 +163,25 @@ function aeGetLayersTransform() {
 				}
 			}
 		}
-	
+
 		return Object.keys(keys).sort();
 	}
-	
+
 	function parseTime(rawTime){
-		var fullframes = Math.floor(rawTime*FRAMERATE);			
+		var fullframes = Math.floor(rawTime*FRAMERATE);
 		var seconds = Math.floor(fullframes / FRAMERATE);
 		var frames = Math.floor(fullframes % FRAMERATE);
 		return {
-			seconds:seconds, 
-			frames:frames, 
-			fullframes:fullframes, 
+			seconds:seconds,
+			frames:frames,
+			fullframes:fullframes,
 			str: String(seconds)  + ':' + String(frames)
 		}
 	}
-	
+
 	function parseValue(propId, propValue){
 		var result = {}
-		
+
 		var propertyDefinition = TRANSFORM_PROPERTY_NAMES[propId];
 		var mult = propertyDefinition.mult || 1;
 		var isDifferentProp = propertyDefinition.name instanceof Array; // like scale (X,Y,Z)
@@ -203,7 +203,7 @@ function aeGetLayersTransform() {
 
 	function getEffects(layer){
 		var effectsProp = layer['Effects'];
-		var effects = []; 
+		var effects = [];
 		if(effectsProp){
 			for (var i=1, len=effectsProp.numProperties; i<=len; i++){
 				var pr = effectsProp.property(i);
@@ -212,7 +212,7 @@ function aeGetLayersTransform() {
 		};
 		return effects;
 	}
-	
+
 	function getLayerDefNew(layer){
 		var jsonLayer = {
 			name: layer.name,
@@ -222,59 +222,60 @@ function aeGetLayersTransform() {
 			initProps:{},
 			keys: {},
 		};
-		
+
 		var transform = layer['Transform'];
 		var sceneLen = activeItem.workAreaDuration;
-		
+
 		for (var d=0;d<TRANSFORM_USEFULL_KEYS.length;d++){
 			var propId = TRANSFORM_USEFULL_KEYS[d];
 			var prop = transform.property(propId);
 			var propName = prop.name;
 			var propAlias = TRANSFORM_PROPERTY_NAMES[propId].alias;
-			
+
 			// fill init params
 			rawValue = prop.valueAtTime(0, true);
 			parsedValue = parseValue(propId, rawValue);
 			jsonLayer.initProps[propAlias] = parsedValue;
 			//
-			
+
 			if(prop.numKeys){ // если для пропа есть ключевые кадры
 				var keyArr = [];
 				for (var j=1; j<=prop.numKeys;j++){
 					var keyTime = prop.keyTime(j);
 					// console.log(propAlias, keyTime);
-					
-					// встречаются аномальные ключи с отрицательным временем, они нахер не нужны
+
+					// встречаются аномальные ключи с отрицательным временем.
+					// даже знать не хочу почему, они нахер не нужны
 					if(keyTime < 0){
 						continue;
 					}
-					
+
 					var interpInType = prop.keyInInterpolationType(j)
 					var interpOutType = prop.keyOutInterpolationType(j)
-					
+
 					var interpIn = {};
 					var interpOut = {};
-					
+
 					if(interpInType === KeyframeInterpolationType.BEZIER){
 						var ease = prop.keyInTemporalEase(j)
 						interpIn.speed = cropValue(ease[0].speed);
 						interpIn.influence = cropValue(ease[0].influence);
 					}
-					
+
 					if(interpOutType === KeyframeInterpolationType.BEZIER){
 						var ease = prop.keyOutTemporalEase(j)
 						interpOut.speed = cropValue(ease[0].speed);
 						interpOut.influence = cropValue(ease[0].influence);
 					}
-					
+
 					var parsedTime = parseTime(keyTime);
 					var rawValue = prop.valueAtTime(keyTime, true);
 					var parsedValue = parseValue(propId, rawValue);
 					var keyString = String(parsedTime.seconds)  + ':' + String(parsedTime.frames);
 					keyArr.push({
-						key:parsedTime.fullframes, 
+						key:parsedTime.fullframes,
 						keyStr:keyString,
-						value:parsedValue, 
+						value:parsedValue,
 						interpolation:{
 							'in': interpIn,
 							'out': interpOut,
@@ -284,13 +285,13 @@ function aeGetLayersTransform() {
 				jsonLayer.keys[propAlias] = keyArr;
 			}
 		};
-		
+
 		// visible ..
 		var visibleOnTime = parseTime(layer.startTime);
 		var visibleOffTime = parseTime(layer.outPoint);
 		jsonLayer.keys['visible'] = [
 			{
-				key: visibleOnTime.fullframes < 0 ? 0 : visibleOnTime.fullframes, 
+				key: visibleOnTime.fullframes < 0 ? 0 : visibleOnTime.fullframes,
 				keyStr: visibleOnTime.fullframes < 0 ? '0:00' : visibleOnTime.str,
 				value: {
 					visible: 1,
@@ -301,33 +302,33 @@ function aeGetLayersTransform() {
 				keyStr: visibleOffTime.fullframes < 0 ? '0:00' : visibleOffTime.str,
 				value: {
 					visible: 0,
-				} 
+				}
 			},
-		];	
+		];
 		// .. visible
-		
+
 		return jsonLayer;
 	}
-	
+
 	function inspectPropsOfObject(obj, prefix){
 		for (var i=1, len=obj.numProperties; i<=len; i++){
 			var pr = obj.property(i);
 			console.log(prefix, ' ', pr.name);
 		}
 	}
-	
+
 	function inspect(obj, notDeep){
 		console.log('---------------- inspect ..')
 		console.log('inspect ', obj)
-		
+
 		var keys = Object.keys(obj);
-		
+
 		keys.forEach(function(key){
-			if(key === 'lightType' || 
-				key === 'moveTo' || 
-				key === 'maxValue' || 
-				key === 'minValue' || 
-				key === 'separationDimension' || 
+			if(key === 'lightType' ||
+				key === 'moveTo' ||
+				key === 'maxValue' ||
+				key === 'minValue' ||
+				key === 'separationDimension' ||
 				key === 'separationLeader'
 				){
 				return;
@@ -338,15 +339,15 @@ function aeGetLayersTransform() {
 			else{
 				// console.log(key);
 				console.log(key, ' ', obj[key]);
-			}			
-			
+			}
+
 		})
 		console.log('.. inspect ---------------- ')
-	}	
-	
+	}
+
 	function inspectLayer(layer){
 		var source = layer.source;
-	
+
 		console.log('***************************** ')
 		console.log('layer.name ', layer.name)
 		console.log('layer.label ', layer.label)
@@ -354,36 +355,36 @@ function aeGetLayersTransform() {
 		console.log('layer.source.file ', source.file)
 		console.log('layer.source.selected ', source.selected)
 		console.log('layer.source.time ', source.time)
-		
+
 		var sourceKeys = Object.keys(source)
-		
+
 		var usedIn = source.usedIn;
 		console.log('usedIn ', usedIn);
 		console.log('usedIn ', usedIn.layers);
-		
-		
+
+
 		// console.log('layer.source 2 ', sourceKeys)
-		
+
 		// layer.source.openInViewer(); // бесполезно но забавно
 		// usefull id, label, file, width, height, usedIn
-		
-		// FootageItem props	
+
+		// FootageItem props
 		// comment,duration,dynamicLinkGUID,file,footageMissing,frameDuration,frameRate,getRenderGUID,
 		// hasAudio,hasVideo,height,id,label,mainSource,name,openInViewer,parentFolder,pixelAspect,proxySource,remove,
 		// replace,replaceWithPlaceholder,replaceWithSequence,replaceWithSolid,selected,setProxy,setProxyToNone,
 		// setProxyWithPlaceholder,setProxyWithSequence,setProxyWithSolid,time,typeName,useProxy,usedIn,width
 	}
-	
+
 	// layer index and other arrays starts from 1
 	for(var i=1; i<=numLayers;i++){
 		var layer = layers[i];
 		console.log(i, ' ', layer, ' ', layer.name);
-		
-		
+
+
 		var jsonLayer = getLayerDefNew(layer);
 		json.layers.push(jsonLayer);
 	}
-	
+
 	return json;
 }
 

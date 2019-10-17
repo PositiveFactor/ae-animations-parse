@@ -31,6 +31,7 @@ const aeParseAdvance = require('./ae/aeParseAdvance');
 const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
 const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
 const aeParseFramedLayer = require('./ae/aeParseFramedLayer');
+const aeParseTweens = require('./ae/aeParseTweens');
 const aeGetKeysForLayer = require('./ae/aeGetKeysForLayer');
 const convertToBezier = require('./ae/convertToBezier');
 //  ...
@@ -124,6 +125,57 @@ function serial(layerIndex){
 	writeFile(filename + '.json', output.ue(toParse));*/
 }
 
+function tween(layerIndex){
+  if(layerIndex === undefined){
+    console.log('param layerIndex is needed');
+    return;
+  }
+
+  console.log('layerIndex', layerIndex);
+
+  var options = getOptions();
+  var aeLayers = ae.executeSync(aeGetLayers);
+  var parseTweensCommand = new ae.Command(aeParseTweens);
+
+  if(layerIndex > aeLayers.length || layerIndex <= 0)
+  {
+    console.log('param layerIndex is wrong. Note: layerindex starts with "1"');
+    console.log('layers num: ' + aeLayers.length);
+    return;
+  }
+
+  /*var layerName = aeLayers[layerIndex-1].name;
+  var res = ae.executeSync(parseTweensCommand, layerIndex, false, options);
+  console.log(JSON.stringify(res, null, '\t'));*/
+
+
+  var aeToBezierCommand = new ae.Command(convertToBezier);
+  var resBesier = ae.executeSync(aeToBezierCommand, 4, 11);
+  // console.log(JSON.stringify(resBesier, null, '\t'));
+  console.log(resBesier)
+
+  var bezier = require('./bezier/bezier');
+  var easing = bezier(resBesier[0], resBesier[1], resBesier[2], resBesier[3]);
+
+  var frames = 17;
+  var oneFrame = 1/30;
+
+  var delta = 100 - 0;
+  // var start
+
+  for (var i=0;i<=frames;i++){
+      console.log(cropValue(1-easing(1/17*i)));
+  }
+
+  // var resJSON = output.serial(res, options.props);
+  // console.log(resJSON);
+
+}
+
+function cropValue(val){
+  return Math.round((val)*1000) / 1000;
+}
+
 function parseUE(filename, layerIndex){
 	var toParse = {};
   var options = getOptions();
@@ -179,7 +231,7 @@ program
   .action(parseUE)
 
 program
-  .command('exp')
+  .command('exp [layerIndex]')
   .alias('e')
   .description('nothing to see here, simple api for experimental staff')
   .action(exp)
@@ -189,6 +241,12 @@ program
   .alias('s')
   .description('print serial format anim')
   .action(serial)
+
+program
+  .command('tween [layerIndex]')
+  .alias('t')
+  .description('print tween sequence anim for TimeLine class')
+  .action(tween)
 
 program
   .command('parse2 [filename]')
