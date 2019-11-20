@@ -114,15 +114,15 @@ function serial(layerIndex, delay){
   }
 
   var layerName = aeLayers[layerIndex-1].name;
-  var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
-  console.log(res);
+  var res = ae.executeSync(parseFramedLayerCommand, layerIndex, options);
+  // console.log(res);
+
+  console.log('Initial values:');
+  console.log(res.initial);
+  console.log(' ');
+
   var resJSON = output.serial(res, options.props, delay);
   console.log(resJSON);
-
-  /*filename = filename || layerName || 'default';
-  var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
-  toParse[layerIndex] = res;
-	writeFile(filename + '.json', output.ue(toParse));*/
 }
 
 function tween(layerIndex){
