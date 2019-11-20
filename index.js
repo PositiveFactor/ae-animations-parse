@@ -94,7 +94,7 @@ function exp(layerIndex){
   console.log('res', res);
 }
 
-function serial(layerIndex){
+function serial(layerIndex, delay){
   if(layerIndex === undefined){
     console.log('param layerIndex is needed');
     return;
@@ -116,7 +116,7 @@ function serial(layerIndex){
   var layerName = aeLayers[layerIndex-1].name;
   var res = ae.executeSync(parseFramedLayerCommand, layerIndex, true, options);
   console.log(res);
-  var resJSON = output.serial(res, options.props);
+  var resJSON = output.serial(res, options.props, delay);
   console.log(resJSON);
 
   /*filename = filename || layerName || 'default';
@@ -237,7 +237,7 @@ program
   .action(exp)
 
 program
-  .command('serial [layerIndex]')
+  .command('serial [layerIndex] [delay]')
   .alias('s')
   .description('print serial format anim')
   .action(serial)

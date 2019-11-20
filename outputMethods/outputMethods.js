@@ -191,15 +191,19 @@ function ueForEasing(sceneJSON){
   return str;
 }
 
-function fillPropsUE(keyProps, filter){
+function fillPropsUE(keyProps, filter, zeroX, zeroY){
+
+  zeroX = zeroX === undefined ? 0 : zeroX;
+  zeroY = zeroY === undefined ? 0 : zeroY;
+
   var frame = {};
 
   var testFunction = function(prop){
     return keyProps.hasOwnProperty(prop) && (filter.length === 0 || filter.indexOf(prop) >= 0);
   }
 
-  if(testFunction('x')) { frame.x = keyProps.x; }
-  if(testFunction('y')) { frame.y = keyProps.y; }
+  if(testFunction('x')) { frame.x = cropValue(keyProps.x - zeroX); }
+  if(testFunction('y')) { frame.y = cropValue(keyProps.y - zeroY); }
   if(testFunction('scaleX')) { frame.sx = keyProps.scaleX; }
   if(testFunction('scaleY')) { frame.sy = keyProps.scaleY; }
   if(testFunction('alpha')) { frame.a = keyProps.alpha; }
@@ -236,11 +240,59 @@ function ue(sceneJSON){
 	return JSON.stringify(result, null, '\t');
 }
 
-function serial(layerObj, filter){
+function cropValue(val){
+  return Math.round((val)*1000) / 1000;
+}
+
+function serial(layerObj, filter, delay, disableAlphaInFirstFrame, disableAlphaInLastFrame, enableAlphaInFirstFrame){
   var resArr = [];
+
+  disableAlphaInFirstFrame = true;
+  disableAlphaInLastFrame = true;
+  enableAlphaInFirstFrame = true;
+
+  if(delay) {
+    for (var i = 0; i < delay; i++) {
+      if(disableAlphaInFirstFrame && i===0) {
+        resArr.push({"a":0});
+      }
+      else {
+        resArr.push({});
+      }
+
+    }
+  }
+
+
+  var RELATIVE_POSITION = false;
+  var firstFrame = true;
   for(let i in layerObj.keys){
-    let frame = fillPropsUE(layerObj.keys[i], filter);
+    if(zeroX === undefined && RELATIVE_POSITION){
+      // var zeroX = 960;
+      // var zeroY = 540; // относительно центра
+      var zeroX = layerObj.keys[i].x;
+      var zeroY = layerObj.keys[i].y; // относительно положения в первом кадре
+    }
+    else if(!RELATIVE_POSITION){
+      var zeroX = 0;
+      var zeroY = 0;
+    }
+
+
+
+    let frame = fillPropsUE(layerObj.keys[i], filter, zeroX, zeroY);
+
+
     resArr.push(frame);
+
+    if(firstFrame && delay){
+      firstFrame = false;
+      resArr[resArr.length-1].a = 1;
+    }
+  }
+
+  if(disableAlphaInLastFrame){
+    resArr[resArr.length-1].a = 0;
   }
 
   return utils.shrinkArrToString(resArr);
