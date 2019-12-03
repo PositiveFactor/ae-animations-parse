@@ -83,6 +83,17 @@ function getOptions(){
     options.props = [];
   }
 
+  if(program.excludeProps) {
+		options.excludeProps = program.excludeProps.split(',').map(function(item){
+      return item.trim();
+    });
+	}
+  else{
+    options.excludeProps = [];
+  }
+
+
+
   return options;
 }
 
@@ -121,7 +132,7 @@ function serial(layerIndex, delay){
   console.log(res.initial);
   console.log(' ');
 
-  var resJSON = output.serial(res, options.props, delay);
+  var resJSON = output.serial(res, options.props, delay, options.excludeProps);
   console.log(resJSON);
 }
 
@@ -222,6 +233,7 @@ program
   .option('-p, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
   .option('-f, --framed', 'output frames instead keys info')
   .option('--props [value]', 'output only chosen props. Props separate by comma.')
+  .option('--exclude-props [value]', 'ignore props in input. Props separate by comma. ex: "x,y,sx,sy" ')
 
 
 program

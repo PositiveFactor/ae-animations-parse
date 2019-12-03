@@ -192,25 +192,40 @@ function ueForEasing(sceneJSON){
 }
 
 function fillPropsUE(keyProps, filter, zeroX, zeroY){
+  var frame = {};
+  // console.log(keyProps);
 
   zeroX = zeroX === undefined ? 0 : zeroX;
   zeroY = zeroY === undefined ? 0 : zeroY;
 
-  var frame = {};
+  /*var propsFromKey = Object.keys(keyProps);
+  var actualProps = [];
+  propsFromKey.forEach((key)=>{
+    if(key.startsWith('!')){
 
-  var testFunction = function(prop){
-    return keyProps.hasOwnProperty(prop) && (filter.length === 0 || filter.indexOf(prop) >= 0);
+    }
+    actualProps
+  })*/
+
+  var testFunction = function(propName, shortPropName){
+    var res =   keyProps.hasOwnProperty(propName) &&
+                (filter.length === 0 || filter.indexOf(shortPropName) >= 0)
+
+    // console.log('filter', filter, res)
+    return res;
   }
 
-  if(testFunction('x')) { frame.x = cropValue(keyProps.x - zeroX); }
-  if(testFunction('y')) { frame.y = cropValue(keyProps.y - zeroY); }
-  if(testFunction('scaleX')) { frame.sx = keyProps.scaleX; }
-  if(testFunction('scaleY')) { frame.sy = keyProps.scaleY; }
-  if(testFunction('alpha')) { frame.a = keyProps.alpha; }
-  if(testFunction('rotation')) {
+  if(testFunction('x', 'x')) { frame.x = cropValue(keyProps.x - zeroX); }
+  if(testFunction('y', 'y')) { frame.y = cropValue(keyProps.y - zeroY); }
+  if(testFunction('scaleX', 'sx')) { frame.sx = keyProps.scaleX; }
+  if(testFunction('scaleY', 'sy')) { frame.sy = keyProps.scaleY; }
+  if(testFunction('alpha', 'a')) { frame.a = keyProps.alpha; }
+  if(testFunction('rotation', 'r')) {
     var val = (keyProps.rotation / 180) * Math.PI;
     frame.r = Math.floor((val)*1000) / 1000;
   }
+//   console.log('frame')
+//   console.log(frame)
   return frame;
 }
 
@@ -244,28 +259,27 @@ function cropValue(val){
   return Math.round((val)*1000) / 1000;
 }
 
-function serial(layerObj, filter, delay, disableAlphaInFirstFrame, disableAlphaInLastFrame, enableAlphaInFirstFrame){
-  var resArr = [];
+function isEqual(frame1, frame2) {
+  var frame1Keys = Object.keys(frame1);
+  var frame2Keys = Object.keys(frame2);
 
-  disableAlphaInFirstFrame = true;
-  disableAlphaInLastFrame = true;
-  enableAlphaInFirstFrame = true;
+  if(frame1Keys.length !== frame2Keys.length) {
+    return false;
+  }
 
-  if(delay) {
-    for (var i = 0; i < delay; i++) {
-      if(disableAlphaInFirstFrame && i===0) {
-        resArr.push({"a":0});
-      }
-      else {
-        resArr.push({});
-      }
+  for (var i = 0; i < frame1Keys.length; i++) {
+    var compareKey = frame1Keys[i];
+    if(frame1Keys[compareKey] === frame2Keys[compareKey])
+    {
 
     }
   }
+}
 
+function serial(layerObj, filter){
+  var resArr = [];
 
   var RELATIVE_POSITION = false;
-  var firstFrame = true;
   for(let i in layerObj.keys){
     if(zeroX === undefined && RELATIVE_POSITION){
       // var zeroX = 960;
@@ -278,21 +292,9 @@ function serial(layerObj, filter, delay, disableAlphaInFirstFrame, disableAlphaI
       var zeroY = 0;
     }
 
-
-
     let frame = fillPropsUE(layerObj.keys[i], filter, zeroX, zeroY);
-
-
+    console.log(frame);
     resArr.push(frame);
-
-    if(firstFrame && delay){
-      firstFrame = false;
-      resArr[resArr.length-1].a = 1;
-    }
-  }
-
-  if(disableAlphaInLastFrame){
-    resArr[resArr.length-1].a = 0;
   }
 
   return utils.shrinkArrToString(resArr);
