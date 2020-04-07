@@ -15,9 +15,14 @@ function aeGetLayersTransform(layerIndex, options) {
 		framerate = options.framerate;
 	}
 
-	var params = [];
+	var props = [];
 	if(options && options.props){
-		params = options.props;
+		props = options.props;
+	}
+
+	var isComputedValues = true;
+	if(options && options.uncomp){
+		isComputedValues = false;
 	}
 
 	var FRAMERATE = framerate;
@@ -146,6 +151,11 @@ function aeGetLayersTransform(layerIndex, options) {
 		};
 	}
 
+	function getPropValue(prop, keyTime){
+			var isPreExpression = !isComputedValues;
+			return prop.valueAtTime(keyTime, isPreExpression);
+	}
+
 	function getLayerDefFramed(layer, options){
 		var jsonLayer = {
 			name:layer.name,
@@ -188,15 +198,13 @@ function aeGetLayersTransform(layerIndex, options) {
 				var prop = transform.property(propId);
 
 				if(r === 0) {
-					var val = prop.valueAtTime(key, true);
+					var val = getPropValue(prop, key); // prop.valueAtTime(key, false);
 					addKey(jsonLayer.initial, key, propId, val, true);
 				}
-				// console.log('prop.name ' + prop.name);
-				// console.log('prop.expression', prop.expression);
 				if(prop.numKeys || prop.expression){
-					var val = prop.valueAtTime(key, true);
+					var val = getPropValue(prop, key); // prop.valueAtTime(key, false);
 					if(prevKey !== null){
-						var prevVal = prop.valueAtTime(prevKey, true);
+						var prevVal = getPropValue(prop, prevKey); // prop.valueAtTime(prevKey, false);
 					}
 
 					addKey(jsonLayer.keys, key, propId, val);
@@ -212,7 +220,7 @@ function aeGetLayersTransform(layerIndex, options) {
 	}
 
 	var layer = layers[layerIndex];
-	var jsonLayer = getLayerDefFramed(layer, options)
+	var jsonLayer = getLayerDefFramed(layer, options, isComputedValues)
 	return jsonLayer;
 }
 

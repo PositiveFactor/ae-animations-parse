@@ -191,6 +191,15 @@ function ueForEasing(sceneJSON){
   return str;
 }
 
+/*
+  есть мысль встроить в --props еще возможность менять значение
+  Типа если написать вместо "x":
+  "x0" - (первый фрейм берется за точку отсчета и остальные считаются относительно него)
+  "x*1.1" - (все значения параметра множатся на 1.1)
+  Возникает проблема, когда в слое не одна анимация(например intro, idle, outro), не всегда
+  есть необходимость для всех анимаций обнулять начало или что-то еще.
+  Гарантированно отделить програмно одну анимацию от другой не получится(можно конечно, но оно не стоит таких усилий).
+*/
 function fillPropsUE(keyProps, filter, zeroX, zeroY){
   var frame = {};
   // console.log(keyProps);
@@ -293,7 +302,7 @@ function serial(layerObj, filter){
     }
 
     let frame = fillPropsUE(layerObj.keys[i], filter, zeroX, zeroY);
-    console.log(frame);
+    console.log(i, frame);
     resArr.push(frame);
   }
 

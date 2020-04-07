@@ -92,7 +92,9 @@ function getOptions(){
     options.excludeProps = [];
   }
 
-
+  if(program.uncomp) {
+		options.uncomp = program.uncomp;
+	}
 
   return options;
 }
@@ -226,7 +228,7 @@ function parse2(filename){
 }
 
 program
-  .version('0.0.2')
+  .version('0.0.3')
   .option('-s, --scale-mult [value]', 'scale mult')
   .option('-r, --relative-positions', 'relative positions')
   .option('--framerate', 'framerate')
@@ -234,6 +236,7 @@ program
   .option('-f, --framed', 'output frames instead keys info')
   .option('--props [value]', 'output only chosen props. Props separate by comma.')
   .option('--exclude-props [value]', 'ignore props in input. Props separate by comma. ex: "x,y,sx,sy" ')
+  .option('-u, --uncomp', 'uncomputed values. Values will be not computed if has expression')
 
 
 program
