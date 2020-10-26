@@ -96,6 +96,10 @@ function getOptions(){
 		options.uncomp = program.uncomp;
 	}
 
+  if(program.full) {
+		options.full = program.full;
+	}
+
   return options;
 }
 
@@ -237,6 +241,7 @@ program
   .option('--props [value]', 'output only chosen props. Props separate by comma.')
   .option('--exclude-props [value]', 'ignore props in input. Props separate by comma. ex: "x,y,sx,sy" ')
   .option('-u, --uncomp', 'uncomputed values. Values will be not computed if has expression')
+  .option('--full', 'output frames for full layer without ranges compute')
 
 
 program

@@ -1,31 +1,22 @@
 function aeGetLayersTransform(layerIndex, options) {
 
-	var scaleMult = 1;
-	if(options && options.scaleMult){
-		scaleMult = options.scaleMult;
-	}
-
-	var positionCoefficient = 1;
-	if(options && options.positionKoefficient){
-		positionCoefficient = options.positionKoefficient;
-	}
-
-	var framerate = 30;
-	if(options && options.framerate){
-		framerate = options.framerate;
-	}
-
-	var props = [];
-	if(options && options.props){
-		props = options.props;
-	}
+	var scaleMult = (options && options.scaleMult) || 1;
+	var positionCoefficient = (options && options.positionKoefficient) || 1;
+	var framerate = (options && options.framerate) || 30;
+	var props = (options && options.props) || [];
+	var isFullLayer = (options && options.full) || false;
 
 	var isComputedValues = true;
 	if(options && options.uncomp){
 		isComputedValues = false;
 	}
 
-	var FRAMERATE = framerate;
+  var globalKeys = {};
+	var json = {layers:[]};
+	var active = app.project.activeItem;
+	var layers = active.layers;
+	var numLayers = active.numLayers;
+
 	var TRANSFORM_USEFULL = [1, 2, 6, 10, 11];
 	var TRANSFORM_PROPERTY_NAMES = {
 		"1": {name:["regX", "regY"], mult:positionCoefficient}, 		// 1
@@ -35,11 +26,7 @@ function aeGetLayersTransform(layerIndex, options) {
 		"11": {name:"alpha", mult:0.01},				// 11
 	};
 
-	var globalKeys = {};
-	var json = {layers:[]};
-	var active = app.project.activeItem;
-	var layers = active.layers;
-	var numLayers = active.numLayers;
+  var FRAMERATE = framerate; // active.frameRate;
 
 	function cropValue(val){
 		return Math.round((val)*1000) / 1000;
@@ -86,16 +73,16 @@ function aeGetLayersTransform(layerIndex, options) {
 		}
 	};
 
-	function getAllFrames(transform, inPointFrame, outPointFrame, onlyKeyframes){
-		var keys = {};
+	function getAllTimeFrames(inPointFrame, outPointFrame){
+    var keys_arr = [];
 		var sceneLen = getSceneLength() * FRAMERATE;
 		inPointFrame = inPointFrame ? inPointFrame : 0;
 		outPointFrame = outPointFrame ? outPointFrame : sceneLen;
 
 		for (var b=inPointFrame; b <= outPointFrame; b++){
-			keys[b/FRAMERATE] = true;
+      keys_arr.push(b/FRAMERATE);
 		}
-		return Object.keys(keys).sort();
+    return keys_arr;
 	}
 
 	function getAllKeysForTransform(transform){
@@ -141,7 +128,6 @@ function aeGetLayersTransform(layerIndex, options) {
 				}
 			}
 		}
-		var oneFrameTime = 1/FRAMERATE;
 
 		return {
 			minTime:minKeyFrame,
@@ -168,7 +154,7 @@ function aeGetLayersTransform(layerIndex, options) {
 		var transform = layer['Transform'];
 		jsonLayer.effectsExist = !!effects;
 
-		var oneFrameTime = 1/30;
+		var oneFrameTime = 1/FRAMERATE;
 		var inPointFrame =  layer.inPoint/oneFrameTime;
 		var outPointFrame =  layer.outPoint/oneFrameTime;
 
@@ -180,13 +166,19 @@ function aeGetLayersTransform(layerIndex, options) {
 		console.log('range.minFrame : ', range.minFrame, ' (time ', range.minTime, ')');
 		console.log('range.maxFrame : ', range.maxFrame, ' (time ', range.maxTime, ')');
 
-		var startPointFrame = Math.max(range.minFrame, inPointFrame);
-		var endPointFrame = Math.min(range.maxFrame, outPointFrame);
+		if(isFullLayer){
+			var startPointFrame = Math.min(range.minFrame, inPointFrame);
+			var endPointFrame = Math.max(range.maxFrame, outPointFrame);
+		}
+		else{
+			startPointFrame = Math.max(range.minFrame, inPointFrame);
+			endPointFrame = Math.min(range.maxFrame, outPointFrame);
+		}
 
 		console.log('total startPointFrame : ', startPointFrame);
 		console.log('total endPointFrame   : ', endPointFrame);
 
-		var allKeys = getAllFrames(transform, startPointFrame, endPointFrame);
+		var allKeys = getAllTimeFrames(startPointFrame, endPointFrame);
 
 		var prevKey = null;
 		for (var r=0; r<allKeys.length; r++) {
@@ -198,13 +190,13 @@ function aeGetLayersTransform(layerIndex, options) {
 				var prop = transform.property(propId);
 
 				if(r === 0) {
-					var val = getPropValue(prop, key); // prop.valueAtTime(key, false);
+					var val = getPropValue(prop, key);
 					addKey(jsonLayer.initial, key, propId, val, true);
 				}
 				if(prop.numKeys || prop.expression){
-					var val = getPropValue(prop, key); // prop.valueAtTime(key, false);
+					var val = getPropValue(prop, key);
 					if(prevKey !== null){
-						var prevVal = getPropValue(prop, prevKey); // prop.valueAtTime(prevKey, false);
+						var prevVal = getPropValue(prop, prevKey);
 					}
 
 					addKey(jsonLayer.keys, key, propId, val);
