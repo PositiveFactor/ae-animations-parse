@@ -18,9 +18,13 @@ function aeGetLayersTransform(layerIndex, options) {
 	var numLayers = active.numLayers;
 
 	var TRANSFORM_USEFULL = [1, 2, 6, 10, 11];
+	var positionParams = ["x", "y"];
+	// if(options.z){
+		positionParams.push("z");
+	//	}
 	var TRANSFORM_PROPERTY_NAMES = {
 		"1": {name:["regX", "regY"], mult:positionCoefficient}, 		// 1
-		"2": {name:["x", "y"], mult:positionCoefficient},			// 2
+		"2": {name:positionParams, mult:positionCoefficient},			// 2
 		"6": {name:["scaleX", "scaleY"], mult:0.01*scaleMult}, 	// 6
 		"10": {name:"rotation"}, 			// 10
 		"11": {name:"alpha", mult:0.01},				// 11

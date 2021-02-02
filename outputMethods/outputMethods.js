@@ -11,7 +11,7 @@ var DEFAULTS = {
   rotation:0,
   alpha:1,
   regX:0, regY:0,
-  x:0, y:0,
+  x:0, y:0, z:0,
   scaleX:1, scaleY:1,
 }
 
@@ -200,12 +200,13 @@ function ueForEasing(sceneJSON){
   есть необходимость для всех анимаций обнулять начало или что-то еще.
   Гарантированно отделить програмно одну анимацию от другой не получится(можно конечно, но оно не стоит таких усилий).
 */
-function fillPropsUE(keyProps, filter, zeroX, zeroY){
+function fillPropsUE(keyProps, filter, zeroX, zeroY, zeroZ, needZ){
   var frame = {};
   // console.log(keyProps);
 
   zeroX = zeroX === undefined ? 0 : zeroX;
   zeroY = zeroY === undefined ? 0 : zeroY;
+  zeroZ = zeroZ === undefined ? 0 : zeroZ;
 
   /*var propsFromKey = Object.keys(keyProps);
   var actualProps = [];
@@ -226,6 +227,9 @@ function fillPropsUE(keyProps, filter, zeroX, zeroY){
 
   if(testFunction('x', 'x')) { frame.x = cropValue(keyProps.x - zeroX); }
   if(testFunction('y', 'y')) { frame.y = cropValue(keyProps.y - zeroY); }
+  // if(needZ){
+    if(testFunction('z', 'z')) { frame.z = cropValue(keyProps.z - zeroZ); }
+  // }
   if(testFunction('scaleX', 'sx')) { frame.sx = keyProps.scaleX; }
   if(testFunction('scaleY', 'sy')) { frame.sy = keyProps.scaleY; }
   if(testFunction('alpha', 'a')) { frame.a = keyProps.alpha; }
@@ -285,7 +289,7 @@ function isEqual(frame1, frame2) {
   }
 }
 
-function serial(layerObj, filter){
+function serial(layerObj, filter, needZ){
   var resArr = [];
 
   var RELATIVE_POSITION = false;
@@ -301,12 +305,26 @@ function serial(layerObj, filter){
       var zeroY = 0;
     }
 
-    let frame = fillPropsUE(layerObj.keys[i], filter, zeroX, zeroY);
-    console.log(i, frame);
+    let frame = fillPropsUE(layerObj.keys[i], filter, zeroX, zeroY, needZ);
+    // console.log(i, frame);
     resArr.push(frame);
   }
 
   return utils.shrinkArrToString(resArr);
+}
+
+function arrayProp(layerObj, propName){
+  var resArr = [];
+  for(let i in layerObj.keys) {
+    let key = layerObj.keys[i];
+    // console.log(i, key);
+    if(key.hasOwnProperty(propName)){
+      resArr.push(key[propName]);
+    }
+    // console.log(i, key);
+
+  }
+  return JSON.stringify(resArr).replace(/,/gm, ', ');
 }
 
 
@@ -314,3 +332,4 @@ module.exports.ue = ue;
 module.exports.ueForEasing = ueForEasing;
 module.exports.ueLayer = ueLayer;
 module.exports.serial = serial;
+module.exports.arrayProp = arrayProp;

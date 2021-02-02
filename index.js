@@ -138,8 +138,34 @@ function serial(layerIndex, delay){
   console.log(res.initial);
   console.log(' ');
 
-  var resJSON = output.serial(res, options.props, delay, options.excludeProps);
+  // console.log(res);
+
+  var resJSON = output.serial(res, options.props, delay, options.excludeProps, options.z);
   console.log(resJSON);
+}
+
+function arrayProp(layerIndex, propName){
+  if(layerIndex === undefined){
+    console.log('param layerIndex is needed');
+    return;
+  }
+
+  var options = getOptions();
+  var aeLayers = ae.executeSync(aeGetLayers);
+  var parseFramedLayerCommand = new ae.Command(aeParseFramedLayer);
+
+  if(layerIndex > aeLayers.length || layerIndex <= 0)
+  {
+    console.log('param layerIndex is wrong. Note: layerindex starts with "1"');
+    console.log('layers num: ' + aeLayers.length);
+    return;
+  }
+
+  var layerName = aeLayers[layerIndex-1].name;
+  var res = ae.executeSync(parseFramedLayerCommand, layerIndex, options);
+
+  var arrayProp = output.arrayProp(res, propName);
+  console.log(arrayProp);
 }
 
 function tween(layerIndex){
@@ -261,6 +287,11 @@ program
   .alias('s')
   .description('print serial format anim')
   .action(serial)
+
+program
+  .command('prop [layerIndex] [prop]')
+  .description('print one prop as array')
+  .action(arrayProp)
 
 program
   .command('tween [layerIndex]')
