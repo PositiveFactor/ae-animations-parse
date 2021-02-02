@@ -1,35 +1,32 @@
-'use strict';
-
-const output = require('./outputMethods/outputMethods');
-require('./polyfills');
 
 // ae middleware ...
 const fs = require('fs');
 const path = require('path');
 const ae = require('after-effects');
+
+const program = require('commander');
+
+ae.options.program = path.join('C:/Program Files/Adobe','Adobe After Effects CC 2019');
+ae.options.errorHandling = true;
 ae.options.includes = [
   './node_modules/after-effects/lib/includes/console.jsx',
   './node_modules/after-effects/lib/includes/es5-shim.jsx',
   './node_modules/after-effects/lib/includes/get.jsx',
   // './includes/standard.jsx'
 ];
-ae.options.program = path.join('C:/Program Files/Adobe','Adobe After Effects CC 2019');
-ae.options.errorHandling = true;
+
 // ...
 
+const output = require('./outputMethods/outputMethods');
+
 // cli interface dependencies ...
-const program = require('commander');
-const Promise = require('promise');
-const cliCoins = require('./cli/cliCoins');
-const cliCreatejs = require('./cli/cliCreatejs');
+
 // ...
 
 // user ae scripts ...
 const aeGetLayers = require('./ae/aeGetLayers');
 const aeGetLayersTransform = require('./ae/aeGetLayersTransform');
 const aeParseAdvance = require('./ae/aeParseAdvance');
-const aeGetCoinsDef = require('./ae/aeGetCoinsDef');
-const aeGetFallingCoinsDef = require('./ae/aeGetFallingCoinsDef');
 const aeParseFramedLayer = require('./ae/aeParseFramedLayer');
 const aeParseTweens = require('./ae/aeParseTweens');
 const aeGetKeysForLayer = require('./ae/aeGetKeysForLayer');
@@ -56,52 +53,7 @@ function getLen(){
   return len;
 }
 
-function getOptions(){
-  var options = {};
-	if(program.scaleMult) {
-		options.scaleMult = program.scaleMult;
-	}
 
-  if(program.positionKoefficient) {
-		options.positionKoefficient = program.positionKoefficient;
-	}
-
-  if(program.framerate) {
-		options.framerate = program.framerate;
-	}
-
-  if(program.framed) {
-		options.framed = program.framed;
-	}
-
-  if(program.props) {
-		options.props = program.props.split(',').map(function(item){
-      return item.trim();
-    });
-	}
-  else{
-    options.props = [];
-  }
-
-  if(program.excludeProps) {
-		options.excludeProps = program.excludeProps.split(',').map(function(item){
-      return item.trim();
-    });
-	}
-  else{
-    options.excludeProps = [];
-  }
-
-  if(program.uncomp) {
-		options.uncomp = program.uncomp;
-	}
-
-  if(program.full) {
-		options.full = program.full;
-	}
-
-  return options;
-}
 
 function exp(layerIndex){
 
@@ -257,60 +209,126 @@ function parse2(filename){
 	// writeFile(filename, output.cjs(aeJSON));
 }
 
+/*var _options = null;
+
+function setOptions(options){
+  _options = options;
+}
+
+function getOptions(){
+  return _options;
+}
+
+module.exports.parseUE = parseUE;
+module.exports.exp = exp;
+module.exports.serial = serial;
+module.exports.arrayProp = arrayProp;
+module.exports.tween = tween;
+module.exports.parse2 = parse2;
+module.exports.getLen = getLen;
+module.exports.setOptions = setOptions;*/
+
+
+
+function getOptions(){
+  var options = {};
+    if(program.scaleMult) {
+        options.scaleMult = program.scaleMult;
+    }
+
+  if(program.positionKoefficient) {
+        options.positionKoefficient = program.positionKoefficient;
+    }
+
+  if(program.framerate) {
+        options.framerate = program.framerate;
+    }
+
+  if(program.framed) {
+        options.framed = program.framed;
+    }
+
+  if(program.props) {
+        options.props = program.props.split(',').map(function(item){
+      return item.trim();
+    });
+    }
+  else{
+    options.props = [];
+  }
+
+  if(program.excludeProps) {
+        options.excludeProps = program.excludeProps.split(',').map(function(item){
+      return item.trim();
+    });
+    }
+  else{
+    options.excludeProps = [];
+  }
+
+  if(program.uncomp) {
+        options.uncomp = program.uncomp;
+    }
+
+  if(program.full) {
+        options.full = program.full;
+    }
+
+  return options;
+}
+
 program
-  .version('0.0.3')
-  .option('-s, --scale-mult [value]', 'scale mult')
-  .option('-r, --relative-positions', 'relative positions')
-  .option('--framerate', 'framerate')
-  .option('-p, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
-  .option('-f, --framed', 'output frames instead keys info')
-  .option('--props [value]', 'output only chosen props. Props separate by comma.')
-  .option('--exclude-props [value]', 'ignore props in input. Props separate by comma. ex: "x,y,sx,sy" ')
-  .option('-u, --uncomp', 'uncomputed values. Values will be not computed if has expression')
-  .option('--full', 'output frames for full layer without ranges compute')
+.version('0.0.3')
+.option('-s, --scale-mult [value]', 'scale mult')
+.option('-r, --relative-positions', 'relative positions')
+.option('--framerate', 'framerate')
+.option('-p, --position-coefficient [value]', 'relative positions') // default 1; for old games 1780/1920(0.927083333)
+.option('-f, --framed', 'output frames instead keys info')
+.option('--props [value]', 'output only chosen props. Props separate by comma.')
+.option('--exclude-props [value]', 'ignore props in input. Props separate by comma. ex: "x,y,sx,sy" ')
+.option('-u, --uncomp', 'uncomputed values. Values will be not computed if has expression')
+.option('--full', 'output frames for full layer without ranges compute')
 
 
 program
-  .command('parseue [filename] [layerIndex]')
-  .alias('pue')
-  .description('parseUE opened ae file to ".anim" file.')
-  .action(parseUE)
+.command('parseue [filename] [layerIndex]')
+.alias('pue')
+.description('parseUE opened ae file to ".anim" file.')
+.action(parseUE)
 
 program
-  .command('exp [layerIndex]')
-  .alias('e')
-  .description('nothing to see here, simple api for experimental staff')
-  .action(exp)
+.command('exp [layerIndex]')
+.alias('e')
+.description('nothing to see here, simple api for experimental staff')
+.action(exp)
 
 program
-  .command('serial [layerIndex] [delay]')
-  .alias('s')
-  .description('print serial format anim')
-  .action(serial)
+.command('serial [layerIndex] [delay]')
+.alias('s')
+.description('print serial format anim')
+.action(serial)
 
 program
-  .command('prop [layerIndex] [prop]')
-  .description('print one prop as array')
-  .action(arrayProp)
+.command('prop [layerIndex] [prop]')
+.description('print one prop as array')
+.action(arrayProp)
 
 program
-  .command('tween [layerIndex]')
-  .alias('t')
-  .description('print tween sequence anim for TimeLine class')
-  .action(tween)
+.command('tween [layerIndex]')
+.alias('t')
+.description('print tween sequence anim for TimeLine class')
+.action(tween)
 
 program
-  .command('parse2 [filename]')
-  .alias('p')
-  .description('parse opened ae file to ".anim" file. EXPERIMENTAL')
-  .action(parse2)
+.command('parse2 [filename]')
+.alias('p')
+.description('parse opened ae file to ".anim" file. EXPERIMENTAL')
+.action(parse2)
 
 program
-  .command('len')
-  .description('get scene len in seconds.')
-  .action(getLen)
-
-cliCoins.initCli(program);
-cliCreatejs.initCli(program);
+.command('len')
+.description('get scene len in seconds.')
+.action(getLen)
 
 program.parse(process.argv);
+
