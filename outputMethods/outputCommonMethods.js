@@ -62,6 +62,6 @@ function getGroupString(group, groupName){
 }
 
 module.exports.translateKeys = translateKeys;
-module.exports.getGroupString = translateKeys;
-module.exports.getInitPropsParams = translateKeys;
+module.exports.getGroupString = getGroupString;
+module.exports.getInitPropsParams = getInitPropsParams;
 module.exports.parseTime = parseTime;
