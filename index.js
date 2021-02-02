@@ -9,9 +9,9 @@ const program = require('commander');
 ae.options.program = path.join('C:/Program Files/Adobe','Adobe After Effects CC 2019');
 ae.options.errorHandling = true;
 ae.options.includes = [
-  './node_modules/after-effects/lib/includes/console.jsx',
-  './node_modules/after-effects/lib/includes/es5-shim.jsx',
-  './node_modules/after-effects/lib/includes/get.jsx',
+  path.join(__dirname, './node_modules/after-effects/lib/includes/console.jsx'),
+  path.join(__dirname, './node_modules/after-effects/lib/includes/es5-shim.jsx'),
+  path.join(__dirname, './node_modules/after-effects/lib/includes/get.jsx'),
   // './includes/standard.jsx'
 ];
 
