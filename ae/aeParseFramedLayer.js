@@ -19,9 +19,10 @@ function aeGetLayersTransform(layerIndex, options) {
 
 	var TRANSFORM_USEFULL = [1, 2, 6, 10, 11];
 	var positionParams = ["x", "y"];
-	// if(options.z){
+	if(options && options.z){
 		positionParams.push("z");
-	//	}
+	}
+
 	var TRANSFORM_PROPERTY_NAMES = {
 		"1": {name:["regX", "regY"], mult:positionCoefficient}, 		// 1
 		"2": {name:positionParams, mult:positionCoefficient},			// 2
@@ -83,8 +84,8 @@ function aeGetLayersTransform(layerIndex, options) {
 		inPointFrame = inPointFrame ? inPointFrame : 0;
 		outPointFrame = outPointFrame ? outPointFrame : sceneLen;
 
-		for (var b=inPointFrame; b <= outPointFrame; b++){
-      keys_arr.push(b/FRAMERATE);
+		for (var index=inPointFrame; index <= outPointFrame; index++){
+      keys_arr.push({frameIndex:index, frameTime:index/FRAMERATE});
 		}
     return keys_arr;
 	}
@@ -106,6 +107,9 @@ function aeGetLayersTransform(layerIndex, options) {
 				}
 			}
 		}
+
+		console.log('getAllKeysForTransform Object.keys(keys).sort()');
+		console.log(Object.keys(keys).sort());
 		return Object.keys(keys).sort();
 	}
 
@@ -156,6 +160,7 @@ function aeGetLayersTransform(layerIndex, options) {
 
 		var effects = layer['Effects'];
 		var transform = layer['Transform'];
+		// getAllKeysForTransform(transform);
 		jsonLayer.effectsExist = !!effects;
 
 		var oneFrameTime = 1/FRAMERATE;
@@ -182,34 +187,37 @@ function aeGetLayersTransform(layerIndex, options) {
 		console.log('total startPointFrame : ', startPointFrame);
 		console.log('total endPointFrame   : ', endPointFrame);
 
+		// все временные метки кадров
 		var allKeys = getAllTimeFrames(startPointFrame, endPointFrame);
 
 		var prevKey = null;
 		for (var r=0; r<allKeys.length; r++) {
-			var key = allKeys[r];
-			jsonLayer.keys[Math.round(key * FRAMERATE)] = {};
+			var frameIndex = allKeys[r].frameIndex;
+			var frameTime = allKeys[r].frameTime;
+
+			jsonLayer.keys[Math.round(frameIndex)] = {};
 
 			for (var d=0; d<TRANSFORM_USEFULL.length; d++){
 				var propId = TRANSFORM_USEFULL[d];
 				var prop = transform.property(propId);
 
 				if(r === 0) {
-					var val = getPropValue(prop, key);
-					addKey(jsonLayer.initial, key, propId, val, true);
+					var val = getPropValue(prop, frameTime);
+					addKey(jsonLayer.initial, frameTime, propId, val, true);
 				}
 				if(prop.numKeys || prop.expression){
-					var val = getPropValue(prop, key);
+					var val = getPropValue(prop, frameTime);
 					if(prevKey !== null){
 						var prevVal = getPropValue(prop, prevKey);
 					}
 
-					addKey(jsonLayer.keys, key, propId, val);
+					addKey(jsonLayer.keys, frameTime, propId, val);
 				}
 				else{
 					// console.log('exp');
 				}
 			};
-			prevKey = key;
+			prevKey = frameTime;
 		}
 
 		return jsonLayer;

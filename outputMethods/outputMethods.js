@@ -11,7 +11,7 @@ var DEFAULTS = {
   rotation:0,
   alpha:1,
   regX:0, regY:0,
-  x:0, y:0, z:0,
+  x:0, y:0,
   scaleX:1, scaleY:1,
 }
 
@@ -202,6 +202,7 @@ function ueForEasing(sceneJSON){
 */
 function fillPropsUE(keyProps, filter, zeroX, zeroY, zeroZ, needZ){
   var frame = {};
+  // console.log("keyProps");
   // console.log(keyProps);
 
   zeroX = zeroX === undefined ? 0 : zeroX;
@@ -228,7 +229,7 @@ function fillPropsUE(keyProps, filter, zeroX, zeroY, zeroZ, needZ){
   if(testFunction('x', 'x')) { frame.x = cropValue(keyProps.x - zeroX); }
   if(testFunction('y', 'y')) { frame.y = cropValue(keyProps.y - zeroY); }
   // if(needZ){
-    if(testFunction('z', 'z')) { frame.z = cropValue(keyProps.z - zeroZ); }
+    // if(testFunction('z', 'z')) { frame.z = cropValue(keyProps.z - zeroZ); }
   // }
   if(testFunction('scaleX', 'sx')) { frame.sx = keyProps.scaleX; }
   if(testFunction('scaleY', 'sy')) { frame.sy = keyProps.scaleY; }
