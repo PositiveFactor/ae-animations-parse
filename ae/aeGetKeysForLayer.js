@@ -14,11 +14,9 @@ function aeGetKeysForLayer(layerIndex, isFramed, options) {
 	if(options && options.framerate){
 		framerate = options.framerate;
 	}
-
 	var FRAMERATE = framerate;
 
 	var TRANSFORM_USEFULL = [1, 2, 6, 10, 11];
-
 	var TRANSFORM_PROPERTY_NAMES = {
 		"1": {alias: 'reg', name:["regX", "regY"], mult:positionCoefficient}, 	// 1
 		"2": {alias: 'position', name:["x", "y"], mult:positionCoefficient},					// 2
@@ -32,23 +30,9 @@ function aeGetKeysForLayer(layerIndex, isFramed, options) {
 	INTERPOLATIONS[KeyframeInterpolationType.BEZIER] = "BEZIER";
 	INTERPOLATIONS[KeyframeInterpolationType.HOLD] = "HOLD";
 
-	function cropValue(val){
-		return Math.round((val)*1000) / 1000;
-	}
-
 	function getSceneLength(){
 	  return active.workAreaDuration;
 	}
-
-	function isInt(n){
-		return Number(n) === n && n % 1 === 0;
-	}
-
-	function isFloat(n){
-		return Number(n) === n && n % 1 !== 0;
-	}
-
-
 
 	function getAllFrames(transform, inPointFrame, outPointFrame){
 		var keys = {};
@@ -92,7 +76,7 @@ function aeGetKeysForLayer(layerIndex, isFramed, options) {
 					var identic = true;
 					for (var f=0;f<propertyNames.length;f++){
 						var propName = propertyNames[f];
-						var val = cropValue(propValue[f]*mult);
+						var val = utils.cropValue(propValue[f]*mult);
 						keyFrameDef[propName] = val;
 					}
 

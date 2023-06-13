@@ -1,7 +1,7 @@
 'use strict'
 
 var _ = require('lodash')
-var JSON5 = require('json5-utils')
+var JSON5 = require('json5')
 var commonMethods = require('./outputCommonMethods');
 var utils = require('./../utils');
 
@@ -220,7 +220,7 @@ function fillPropsUE(keyProps, filter, zeroX, zeroY, zeroZ, needZ){
 
   var testFunction = function(propName, shortPropName){
     var res =   keyProps.hasOwnProperty(propName) &&
-                (filter.length === 0 || filter.indexOf(shortPropName) >= 0)
+                (/*!filter || */filter.length === 0 || filter.indexOf(shortPropName) >= 0)
 
     // console.log('filter', filter, res)
     return res;
@@ -328,9 +328,34 @@ function arrayProp(layerObj, propName){
   return JSON.stringify(resArr).replace(/,/gm, ', ');
 }
 
+function bigserial(layerObj, filter, needZ){
+  var resArr = [];
+
+  var RELATIVE_POSITION = false;
+  for(let i in layerObj.keys){
+    if(zeroX === undefined && RELATIVE_POSITION){
+      // var zeroX = 960;
+      // var zeroY = 540; // относительно центра
+      var zeroX = layerObj.keys[i].x;
+      var zeroY = layerObj.keys[i].y; // относительно положения в первом кадре
+    }
+    else if(!RELATIVE_POSITION){
+      var zeroX = 0;
+      var zeroY = 0;
+    }
+
+    let frame = fillPropsUE(layerObj.keys[i], filter, zeroX, zeroY, needZ);
+    // console.log(i, frame);
+    resArr.push(frame);
+  }
+
+  return utils.shrinkArrToString(resArr);
+}
+
 
 module.exports.ue = ue;
 module.exports.ueForEasing = ueForEasing;
 module.exports.ueLayer = ueLayer;
 module.exports.serial = serial;
+module.exports.bigserial = bigserial;
 module.exports.arrayProp = arrayProp;

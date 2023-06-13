@@ -2,26 +2,24 @@
 // ae middleware ...
 const fs = require('fs');
 const path = require('path');
+// не стоит вызывать как ae(cmd), лучше ae.executeSync(cmd),
+// пусть будет все синхронным тк дебажить это месиво близко к невозможному
 const ae = require('after-effects');
 
 const program = require('commander');
 
-ae.options.program = path.join('C:/Program Files/Adobe','Adobe After Effects CC 2019');
+ae.options.program = path.join('C:/Program Files/Adobe','Adobe After Effects 2022');
 ae.options.errorHandling = true;
 ae.options.includes = [
   path.join(__dirname, './node_modules/after-effects/lib/includes/console.jsx'),
   path.join(__dirname, './node_modules/after-effects/lib/includes/es5-shim.jsx'),
   path.join(__dirname, './node_modules/after-effects/lib/includes/get.jsx'),
-  // './includes/standard.jsx'
+  path.join(__dirname, './includes/utils.jsx')
 ];
 
 // ...
 
 const output = require('./outputMethods/outputMethods');
-
-// cli interface dependencies ...
-
-// ...
 
 // user ae scripts ...
 const aeGetLayers = require('./ae/aeGetLayers');
@@ -33,32 +31,25 @@ const aeGetKeysForLayer = require('./ae/aeGetKeysForLayer');
 const convertToBezier = require('./ae/convertToBezier');
 //  ...
 
-const baseFolder = 'parsed';
-
-function writeFile(filename, data){
-  var filepath = path.join(baseFolder, filename);
-	fs.writeFile(filepath, data, function(err) {
+function writeFile(filePath, data){
+	fs.writeFile(filePath, data, function(err) {
 		if(err) {
-			return console.log(`error while write "${filepath}":\n${err}`);
+			return console.log(`error while write "${filePath}":\n${err}`);
 		}
 		else{
-			console.log(`writed "${filepath}"`);
+			console.log(`writed "${filePath}"`);
 		}
 	});
 }
 
 function getLen(){
   var func = require('./ae/aeGetSceneLength');
-  var len = ae(func);
+  var len = ae.executeSync(func);
   return len;
 }
 
-
-
 function exp(layerIndex){
-
   var aeCommand = new ae.Command(convertToBezier);
-
   var res = ae.executeSync(aeCommand);
   console.log('res', res);
 }
@@ -69,12 +60,7 @@ function serial(layerIndex, delay){
     return;
   }
 
-  console.log('layerIndex', layerIndex);
-
-  var options = getOptions();
   var aeLayers = ae.executeSync(aeGetLayers);
-  var parseFramedLayerCommand = new ae.Command(aeParseFramedLayer);
-
   if(layerIndex > aeLayers.length || layerIndex <= 0)
   {
     console.log('param layerIndex is wrong. Note: layerindex starts with "1"');
@@ -82,15 +68,11 @@ function serial(layerIndex, delay){
     return;
   }
 
-  var layerName = aeLayers[layerIndex-1].name;
-  var res = ae.executeSync(parseFramedLayerCommand, layerIndex, options);
-  // console.log(res);
+  var options = getOptions();
+  var res = ae.executeSync(new ae.Command(aeParseFramedLayer), layerIndex, options);
 
   console.log('Initial values:');
   console.log(res.initial);
-  console.log(' ');
-
-  // console.log(res);
 
   var resJSON = output.serial(res, options.props, delay, options.excludeProps, options.z);
   console.log(resJSON);
@@ -130,7 +112,6 @@ function tween(layerIndex){
 
   var options = getOptions();
   var aeLayers = ae.executeSync(aeGetLayers);
-  var parseTweensCommand = new ae.Command(aeParseTweens);
 
   if(layerIndex > aeLayers.length || layerIndex <= 0)
   {
@@ -139,37 +120,35 @@ function tween(layerIndex){
     return;
   }
 
-  /*var layerName = aeLayers[layerIndex-1].name;
-  var res = ae.executeSync(parseTweensCommand, layerIndex, false, options);
-  console.log(JSON.stringify(res, null, '\t'));*/
+  var layerName = aeLayers[layerIndex-1].name;
+  var res = ae.executeSync(new ae.Command(aeGetKeysForLayer), layerIndex, false, options);
+  console.log(JSON.stringify(res, null, '\t'));
 
 
-  var aeToBezierCommand = new ae.Command(convertToBezier);
-  var resBesier = ae.executeSync(aeToBezierCommand, 4, 11);
-  // console.log(JSON.stringify(resBesier, null, '\t'));
-  console.log(resBesier)
 
-  var bezier = require('./bezier/bezier');
-  var easing = bezier(resBesier[0], resBesier[1], resBesier[2], resBesier[3]);
-
-  var frames = 17;
-  var oneFrame = 1/30;
-
-  var delta = 100 - 0;
-  // var start
-
-  for (var i=0;i<=frames;i++){
-      console.log(cropValue(1-easing(1/17*i)));
-  }
-
-  // var resJSON = output.serial(res, options.props);
-  // console.log(resJSON);
 
 }
 
-function cropValue(val){
-  return Math.round((val)*1000) / 1000;
-}
+/*
+!!bezier test
+
+var aeToBezierCommand = new ae.Command(convertToBezier);
+var resBesier = ae.executeSync(aeToBezierCommand, 4, 11);
+// console.log(JSON.stringify(resBesier, null, '\t'));
+console.log(resBesier)
+
+var bezier = require('./bezier/bezier');
+var easing = bezier(resBesier[0], resBesier[1], resBesier[2], resBesier[3]);
+
+var frames = 17;
+var oneFrame = 1/30;
+
+var delta = 100 - 0;
+// var start
+
+// var resJSON = output.serial(res, options.props);
+// console.log(resJSON);
+*/
 
 function parseUE(filename, layerIndex){
 	var toParse = {};
@@ -204,31 +183,45 @@ function parse2(filename){
 	var filename = filename || 'default';
 	var filenameJSON = filename + '.json';
 	writeFile(filenameJSON, JSON.stringify(aeJSON, null, '  '));
-
-	// filename = filename + '.anim';
-	// writeFile(filename, output.cjs(aeJSON));
 }
 
-/*var _options = null;
+function getComposition(){
+  var aeLayers = ae.executeSync(aeGetLayers); // [{index, name}, {index, name}, ...]
+  // console.log('aeLayers', aeLayers);
 
-function setOptions(options){
-  _options = options;
+  // var aeJSON = ae.executeSync(aeGetLayersTransform);
+  // var cwd = process.argv;
+  var cwd = __dirname;
+  var parseFramedLayerCommand = new ae.Command(aeParseFramedLayer);
+  //
+  // var filename = 'default';
+	// var filenameJSON = path.join(cwd, filename + '.json');
+	// writeFile(filenameJSON, JSON.stringify(aeLayers, null, '  '));
+  // var layerIndex = 7;
+  // var res = ae.executeSync(parseFramedLayerCommand, layerIndex);
+  // console.log('res', res);
+  // var resJSON = output.serial(res);
+  // console.log('resJSON', resJSON);
+
+  var out = '';
+
+  aeLayers.forEach(function(item){
+    out += item.index + ' ' + item.name + '\n';
+
+    var res = ae.executeSync(parseFramedLayerCommand, item.index);
+    out += JSON.stringify(res.initial, null, '  ') + '\n';
+
+    // var resJSON = output.bigserial(res);
+    // out += resJSON + '\n\n';
+  })
+
+
+  var filename = 'default';
+	var filenameJSON = path.join(cwd, filename + '.json');
+	writeFile(filenameJSON, out);
+
+
 }
-
-function getOptions(){
-  return _options;
-}
-
-module.exports.parseUE = parseUE;
-module.exports.exp = exp;
-module.exports.serial = serial;
-module.exports.arrayProp = arrayProp;
-module.exports.tween = tween;
-module.exports.parse2 = parse2;
-module.exports.getLen = getLen;
-module.exports.setOptions = setOptions;*/
-
-
 
 function getOptions(){
   var options = {};
@@ -303,6 +296,12 @@ program
 .action(exp)
 
 program
+.command('comp')
+.alias('c')
+.description('json composition')
+.action(getComposition)
+
+program
 .command('serial [layerIndex] [delay]')
 .alias('s')
 .description('print serial format anim')
@@ -331,4 +330,3 @@ program
 .action(getLen)
 
 program.parse(process.argv);
-

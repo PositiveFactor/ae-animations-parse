@@ -1,3 +1,6 @@
+/*global objects*/
+// utils - ./uncludes/utils.jsx
+
 function aeGetLayersTransform(layerIndex, options) {
 
 	var scaleMult = (options && options.scaleMult) || 1;
@@ -33,24 +36,12 @@ function aeGetLayersTransform(layerIndex, options) {
 
   var FRAMERATE = framerate; // active.frameRate;
 
-	function cropValue(val){
-		return Math.round((val)*1000) / 1000;
-	}
-
 	function getSceneLength(){
 	  return active.workAreaDuration;
 	}
 
-	function isInt(n){
-		return Number(n) === n && n % 1 === 0;
-	}
-
-	function isFloat(n){
-		return Number(n) === n && n % 1 !== 0;
-	}
-
 	function _saveKeyframe(gkeys, key, propName, val, notCreateNestedObject){
-		val = !isInt(val) ? Number(val.toFixed(3)) : val;
+		val = !utils.isInt(val) ? Number(val.toFixed(3)) : val;
 		if(notCreateNestedObject) {
 			gkeys[propName] = val;
 		}
@@ -73,7 +64,7 @@ function aeGetLayersTransform(layerIndex, options) {
 
 		for (var f=0;f<propertyNames.length;f++){
 			var propName = propertyNames[f];
-			var val = cropValue(propValue[f]*mult);
+			var val = utils.cropValue(propValue[f]*mult);
 			_saveKeyframe(gkeys, key, propName, val, notCreateNestedObject);
 		}
 	};

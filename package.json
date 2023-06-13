@@ -13,12 +13,12 @@
   "author": "pf",
   "license": "ISC",
   "dependencies": {
-    "JSON2": "^0.1.0",
     "after-effects": "^0.4.15",
     "autocomplete": "0.0.1",
     "commander": "^2.20.3",
     "es5-shim": "^4.5.15",
-    "json5-utils": "^0.3.1",
+    "JSON2": "^0.1.0",
+    "json5": "^2.2.0",
     "lodash": "^4.17.20",
     "regex": "^0.1.1"
   }

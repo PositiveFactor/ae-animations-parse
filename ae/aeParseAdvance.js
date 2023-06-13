@@ -116,18 +116,6 @@ function aeGetLayersTransform() {
 	var layers = activeItem.layers;
 	var numLayers = activeItem.numLayers;
 
-	function isInt(n){
-		return Number(n) === n && n % 1 === 0;
-	}
-
-	function isFloat(n){
-		return Number(n) === n && n % 1 !== 0;
-	}
-
-	function cropValue(val){
-		return Math.floor((val)*100) / 100;
-	}
-
 	function getAllKeysForTransform(transform){
 		var keys = {'0':true};
 		var sceneLen = activeItem.workAreaDuration;
@@ -189,13 +177,13 @@ function aeGetLayersTransform() {
 			var propValues = propertyDefinition.name;
 			for (var f=0;f<propValues.length;f++){
 				var propName = propValues[f];
-				var val = cropValue(propValue[f]*mult); // Math.round((propValue[f]*mult)*100) / 100;
+				var val = utils.cropValue(propValue[f]*mult); // Math.round((propValue[f]*mult)*100) / 100;
 				result[propName] = val;
 			}
 		}
 		else{
 			propName = propertyDefinition.name;
-			val = cropValue(propValue*mult); //  Math.round((propValue*mult)*100) / 100;
+			val = utils.cropValue(propValue*mult); //  Math.round((propValue*mult)*100) / 100;
 			result[propName] = val;
 		}
 		return result;
@@ -258,14 +246,14 @@ function aeGetLayersTransform() {
 
 					if(interpInType === KeyframeInterpolationType.BEZIER){
 						var ease = prop.keyInTemporalEase(j)
-						interpIn.speed = cropValue(ease[0].speed);
-						interpIn.influence = cropValue(ease[0].influence);
+						interpIn.speed = utils.cropValue(ease[0].speed);
+						interpIn.influence = utils.cropValue(ease[0].influence);
 					}
 
 					if(interpOutType === KeyframeInterpolationType.BEZIER){
 						var ease = prop.keyOutTemporalEase(j)
-						interpOut.speed = cropValue(ease[0].speed);
-						interpOut.influence = cropValue(ease[0].influence);
+						interpOut.speed = utils.cropValue(ease[0].speed);
+						interpOut.influence = utils.cropValue(ease[0].influence);
 					}
 
 					var parsedTime = parseTime(keyTime);
